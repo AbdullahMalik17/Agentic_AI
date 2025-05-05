@@ -3,4 +3,18 @@ It means that we have the application that works autonomously . I give him work 
 ## API (Application Programme Interface)
 It helps us to get and send data to another websites or devices . 
 It act like an bridge between two devices or websites .
+# Chat completion Api
+It enables conservational natural language model between user .
+# 
 
+# Creating python environment 
+       python -m venv .venv
+# Activation of python environment
+       .\.venv\Scripts\activate
+# Commad to make a package for agent 
+        uv init --package name 
+# To run my project 
+        uv run name                  
+
+This name is taken from through .toml file from script section      
+       
