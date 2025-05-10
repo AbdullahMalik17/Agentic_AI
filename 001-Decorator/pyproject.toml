@@ -1,7 +1,0 @@
-[project]
-name = "decorator"
-version = "0.1.0"
-description = "This ia an assignment from my sir hassan."
-readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []

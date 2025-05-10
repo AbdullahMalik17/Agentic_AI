@@ -10,4 +10,3 @@ def my_decorator(func):
 @my_decorator        # @ is used to apply the decorator
 def say_hello():
     print("Hello!")
-say_hello()    

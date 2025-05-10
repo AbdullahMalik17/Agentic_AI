@@ -1,5 +1,5 @@
 [project]
-name = "02-chailit"
+name = "decorator1"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -7,12 +7,12 @@ authors = [
     { name = "Abdullah Ather", email = "abdullahather272@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = [
-    "chainlit>=2.5.5",
-]
+dependencies = []
 
 [project.scripts]
-02-chailit = "02_chailit:main"
+decorator2 = "decorator1:main"
+decorator1 = "decorator1.app:say_hello"
+decoratorassign = "assignment.app:say_Abdullah"
 
 [build-system]
 requires = ["hatchling"]
