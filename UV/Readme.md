@@ -1,5 +1,5 @@
 # UV 
-UV package manager that helps us to install data very fastly due to writtten in rust . All the other package manager give their own commands . But UV give command to like with other i.e uv pip . 
+UV package manager that helps us to install data very fastly due to write in rust . All the other package manager give their own commands . But UV give command to like with other i.e uv pip . 
 
 ## Features 
 - Faster than pip
@@ -17,7 +17,7 @@ UV package manager that helps us to install data very fastly due to writtten in 
 - `uv init --package name` - to make package 
 - `uv init folder ` - to make the uv folder 
 - `uv run file or sripts in toml ` - we write file name when it is uv for folder except package 
-- `uv pip install` - to install anything 
+- `uv pip install` - to install all depencies in TOML . 
 - `uv add depencies` to add more installations
 - `uv publish` to public our project .
 
