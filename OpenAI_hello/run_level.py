@@ -51,7 +51,7 @@ async def main(message: cl.Message):
     # Save the result in the histroy .
     history.append({"role":"assistant","content":result.final_output})
     cl.user_session.set("History",history)
-    await cl.Message(content=result.final_output).send()
+    await cl.Message(content=result.final_output).send()  
   except Exception as e:
     cl.Message(content={str(e)}).send()
 
