@@ -39,4 +39,4 @@ async def main(message:cl.Message):
         message.content,
         run_config=None
     )
-    await cl.Message(content=result.).send
+    await cl.Message(content=result.).send()
