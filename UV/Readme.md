@@ -1,6 +1,9 @@
 # UV 
 UV package manager that helps us to install data very fastly due to write in rust . All the other package manager give their own commands . But UV give command to like with other i.e uv pip . 
 
+# Package Manager in Python
+Package managers are tools that help you install, update, and manage Python packages and their dependencies . 
+
 ## Features 
 - Faster than pip
 - Virtual environment like anaconda
