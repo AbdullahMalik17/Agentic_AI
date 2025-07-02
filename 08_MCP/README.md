@@ -11,6 +11,11 @@ It's tools are as follows:
 It enables the autentication to get data . Anyone has no access to it .
 # Working 
 Basically , It's working is simialar to API . But it is considered as a tool of rapper on it .
+# Limitation 
+- Remote Agent is connected to our Agent as tools 
+- We are not connected to global agents .
+## Resolve
+- Google give A2A protocol to connect remote Agent as a agent . He checks all the capabilities of agent through agent card and autonomously use the agent .  
 
 
 
