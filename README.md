@@ -1,5 +1,8 @@
 # Agentic_AI
-It means that we have the application that works autonomously . I give him work then , he is responsible to do it . 
+It means that we have the application that works autonomously . I give him work then , he is responsible to do it .
+## Agent loop
+`Agent loop`: Built-in agent loop that handles calling tools, sending results to the LLM, and looping until the LLM is done.
+
 ## API (Application Programme Interface)
 It helps us to get and send data to one another websites or devices . 
 It acts like an bridge between two devices or websites .
