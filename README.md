@@ -37,7 +37,8 @@ When we use the virtual computing , then we have to pay for only this time which
 
 # We will make the agentic who is capable for following things:
 - AI First 
-- Cloud First 
+- Agent Native Cloud First    
 - Cloud Anywhere
 - Develop anywhere
-       
+- Open Core and Manage Edge
+        
