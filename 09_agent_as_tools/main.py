@@ -15,7 +15,7 @@ external_client = AsyncOpenAI(
 set_default_openai_client(external_client)
 set_tracing_disabled(True)
 set_default_openai_api("chat_completions")
-# we will make the on chat data
+#we will make the on chat data
 # @on_chat_start
 # async def start():
 #     """Set up the chat session when a user connects."""
