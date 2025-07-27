@@ -1,2 +1,7 @@
-.env
-venv
+.venv
+.uv.lock 
+.files
+.chainlit
+__pycache__
+# adding secrets file
+.env 
