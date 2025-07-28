@@ -21,7 +21,7 @@ A sophisticated AI-powered development platform that utilizes three specialized 
   - Cross-platform framework support (React Native, Flutter)
   - Mobile UI/UX best practices
   - App deployment and publishing assistance
-  - Performance optimization tips
+  - Agentic AI (Openai SDK , Python )
 
 ### 3. Agentic AI Developer Agent
 - **Expertise**: AI agent development and integration
@@ -58,7 +58,8 @@ A sophisticated AI-powered development platform that utilizes three specialized 
    ```
 3. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   uv add openai-agents
+   uv add chainlit
    ```
 4. Configure environment variables:
    ```env
