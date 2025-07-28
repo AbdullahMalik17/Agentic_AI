@@ -1,0 +1,7 @@
+.venv 
+.files
+.chainlit 
+__pycache__/
+uv.lock 
+# Below we store keys 
+.env 
