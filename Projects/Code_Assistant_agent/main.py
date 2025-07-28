@@ -2,11 +2,11 @@ import chainlit as cl
 # this takes the data from prompt files 
 from system_prompt import web_developer_prompt, mobile_developer_prompt, agentic_ai_developer_prompt, panacloud_prompt
 from chainlit import on_chat_start, on_message
-from dotenv import load_dotenv
+from dotenv import load_dotenv , find_dotenv
 import os 
 import asyncio
 from agents import Agent , Runner ,AsyncOpenAI, set_default_openai_client , set_tracing_disabled , set_default_openai_api
-load_dotenv()
+load_dotenv(find_dotenv())
 api_key = os.getenv("GEMINI_API_KEY")
 external_client = AsyncOpenAI( 
     api_key= api_key,
@@ -20,9 +20,6 @@ set_default_openai_api("chat_completions")
 # async def start():
 #     """Set up the chat session when a user connects."""
 #     await cl.Message(content="Welcome to coder AI Assistant! How can you help you today?").send()
-@cl.on_chat_resume
-async def on_chat_resume(thread):
-    pass
 @cl.set_starters
 async def set_starters():
     return [
@@ -80,12 +77,16 @@ async def main(message :cl.Message):
                         model="gemini-2.0-flash",
                         handoff_description="Agentic AI developer expert . ",
                         tools=[devops_tool,openai_tool])
-    # Triage Agent
+    # Triage Agent .venv\Scripts\activate
     panacloud :Agent = Agent(
                         name = "Panacloud" ,
                         instructions=panacloud_prompt,
                         model="gemini-2.0-flash",
                         handoffs=[web_developer,mobile_developer,agenticai_developer])
+#   To make the stateable .
+    cl.user_session.set("history",[])
+    history = cl.user_session.get("history",[])
+    history.append({"role":"user", "content": message.content})
     result = await Runner.run(
         panacloud, 
         message.content,
@@ -94,3 +95,8 @@ async def main(message :cl.Message):
     print(message.content)
     await cl.Message(content=result.final_output).send()
     print(result.final_output)
+    history.append({"role":"system","content":result.final_output})
+    cl.user_session.set("history", history)
+    print("role: User", message.content)
+    print("role: System", result.final_output)
+    print(history)
