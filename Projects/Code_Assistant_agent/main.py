@@ -86,10 +86,11 @@ async def main(message :cl.Message):
                         instructions=panacloud_prompt,
                         model="gemini-2.0-flash",
                         handoffs=[web_developer,mobile_developer,agenticai_developer])
-    result = Runner.run_sync(
+    result = await Runner.run(
         panacloud, 
         message.content,
     )
     print(result)
     print(message.content)
     await cl.Message(content=result.final_output).send()
+    print(result.final_output)

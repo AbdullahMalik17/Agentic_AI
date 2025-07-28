@@ -8,7 +8,8 @@ It helps us to get and send data to one another websites or devices .
 It acts like an bridge between two devices or websites .
 # Chat completion API
 It enables conservational natural language model between user .
-
+# Virtual Environment
+It helps to install in only folder . 
 # Creating python environment 
        python -m venv .venv
 # Activation of python environment
