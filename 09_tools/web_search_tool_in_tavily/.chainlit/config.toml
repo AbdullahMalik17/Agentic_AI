@@ -123,4 +123,4 @@ default_avatar_file_url = ""
 #     url = "https://github.com/Chainlit/chainlit/issues"
 
 [meta]
-generated_by = "2.6.2"
+generated_by = "2.6.3"

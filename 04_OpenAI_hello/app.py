@@ -25,7 +25,7 @@ model = OpenAIChatCompletionsModel(
     model="gemini-2.0-flash",
     openai_client=external_client,
 )
-
+# Instead of using OpenAIChatCompletionsModel , We can use setdefault_openai_api("chat_completions")
 
 agent1 = Agent(
         name="Assistant",
