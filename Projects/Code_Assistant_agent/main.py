@@ -89,7 +89,7 @@ async def main(message :cl.Message):
     history.append({"role":"user", "content": message.content})
     result = await Runner.run(
         panacloud, 
-        message.content,
+        history,
     )
     print(result)
     print(message.content)
