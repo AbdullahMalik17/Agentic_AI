@@ -13,7 +13,7 @@ It helps to install in only folder .
 # Creating python environment 
        python -m venv .venv
 # Activation of python environment
-       .venv\Scripts\activate.
+       .venv\Scripts\activate
 # Commad to make a package for agent 
         uv init --package name 
 # To run my project 
