@@ -32,7 +32,7 @@ class Information:
     email: str 
 
 @function_tool
-async def get_information(Wrapper : RunContextWrapper)-> str:
+async def get_information(Wrapper : RunContextWrapper[Information])-> str:
     print("Retrieving user information from context...")
     print(f"\n Context received: {Wrapper} \n ")
     user_info1 = f"The name of user is {Wrapper.context.name}, age is {Wrapper.context.age}, email is {Wrapper.context.email}."
