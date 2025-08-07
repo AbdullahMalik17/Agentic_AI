@@ -9,3 +9,5 @@ We use RunContextWrapper to rap it in the tool or function tool .
 # Model Context 
 It is a data that is going to LLM directly and it stores in the LLM.
 It is given to LLM through chat history 
+# RunContextWrapper 
+It is used to give our context to tools . It has so many features like token information . To get content information , We write our objects as like ```RunContextWrapper[content_name]`

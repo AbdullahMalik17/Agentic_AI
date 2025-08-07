@@ -34,10 +34,10 @@ class Information:
 @function_tool
 async def get_information(Wrapper : RunContextWrapper)-> str:
     print("Retrieving user information from context...")
-    print(f"Context received: {Wrapper.context}")
-    user_info = f"The name of user is {Wrapper.context.name}, age is {Wrapper.context.age}, and email is {Wrapper.context.email}."
-    print(f"Returning: {user_info}")
-    return user_info
+    print(f"\n Context received: {Wrapper} \n ")
+    user_info1 = f"The name of user is {Wrapper.context.name}, age is {Wrapper.context.age}, email is {Wrapper.context.email}."
+    print(f"Returning: {user_info1}")
+    return user_info1
 
 
 async def main():
@@ -49,7 +49,7 @@ async def main():
 
     user_info = Information("Abdullah",18,"muhammadabdullah51700@gmail.com")
     print(f"Created user info: {user_info}")
-    result = await Runner.run(agent , "Please use the get_information tool to tell me about Abdullah's age", run_config=run_config , context=user_info)
+    result = await Runner.run(agent , "Please use the get_information tool to tell me about Abdullah's age and email. ", run_config=run_config , context=user_info)
     print("Final output:")
     print(result.final_output)
 if __name__ == "__main__":
