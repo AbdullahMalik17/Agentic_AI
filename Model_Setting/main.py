@@ -14,7 +14,7 @@ external_client = AsyncOpenAI(
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
 )
 model = OpenAIChatCompletionsModel(
-    model="gemini-2.5-pro",
+    model="gemini-2.0-flash",
     openai_client=external_client,
 )
 
@@ -29,7 +29,11 @@ async def main():
     agent = Agent(
         name = "InformationAgent",
         instructions="You are a helpful agents . Give detailed and informative answers to the user's questions. Be concise .",
-        model_settings = ModelSettings(temperature=0.2,max_tokens=40000)
+        model_settings = ModelSettings(
+            temperature=2,
+            max_tokens=40000,
+            presence_penalty=1.9
+            )
     )    
 
     result = await Runner.run(agent , "Why do we need to learn Agentic AI ", run_config=run_config )
