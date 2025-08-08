@@ -1,0 +1,9 @@
+.venv 
+uv.lock
+# Secrets file
+.env 
+.files
+.chainlit
+__pycache__  
+chainlit.md  
+system_prompt.py 

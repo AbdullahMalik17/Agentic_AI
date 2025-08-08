@@ -25,6 +25,8 @@ run_config = RunConfig(
     model_provider = external_client,
     tracing_disabled=True,
 )    
+def basic_dynamic( context: RunContextWrapper, agent: Agent) -> str:
+    return f"You are {agent.name}. You give the user information about the user based on the context provided."
 @dataclass 
 class Information:
     name : str 
@@ -41,17 +43,16 @@ async def get_information(Wrapper : RunContextWrapper[Information])-> str:
 
 
 async def main():
-    # Create an agent with the model and function tool
-  
-        
+    # Create an agent with the model and function tool 
     agent : Agent = Agent(
         name = "InformationAgent",
+        instructions = basic_dynamic,
         tools=[get_information]
     )    
 
     user_info = Information("Abdullah",18,"muhammadabdullah51700@gmail.com")
     print(f"Created user info: {user_info}")
-    result = await Runner.run(agent , "Please use the get_information tool to tell me about Abdullah's age and email. ", run_config=run_config , context=user_info)
+    result = await Runner.run(starting_agent=agent ,input = "What is your name? How can you help me ?", run_config=run_config , context=user_info)
     print("Final output:")
     print(result.final_output)
     print(agent.instructions)

@@ -1,321 +1,62 @@
-import os
+from agents import Agent , Runner , AsyncOpenAI , OpenAIChatCompletionsModel, RunConfig , RunContextWrapper , function_tool 
+import os 
 import asyncio
-#from openai.types.response import ResposnseTextDeltaEvent
-from openai.types.responses import ResponseTextDeltaEvent 
-import chainlit as cl 
-from agents import Agent, Runner, AsyncOpenAI, OpenAIChatCompletionsModel, RunConfig
-from dotenv import load_dotenv, find_dotenv 
-from typing import cast
-# Load environment variables
+from dotenv import load_dotenv , find_dotenv
+from dataclasses import dataclass
+from openai.types.responses import ResponseTextDeltaEvent
+
+# load the environment variables
 load_dotenv(find_dotenv())
-gemini_api_key = os.getenv("GEMINI_API_KEY")  
-if not gemini_api_key:
-    raise ValueError("Gemini API key is not set . Please , ensure that it is defined in your env file.")
 
-# It is used to show the display message in the chat 
-@cl.on_chat_start
-async def handle_message():
-    # Step 1: Create a provider 
-    provider = AsyncOpenAI(
-      api_key=gemini_api_key,
-      base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
-    )
-    # Step 2: Create a model
-    model = OpenAIChatCompletionsModel(
-      openai_client=provider,
-      model="gemini-2.0-flash"
-    ) 
-    # Step 3: Define config at run level
-    run_config = RunConfig(
-      model=model,
-      tracing_disabled=True,  # Disable tracing
-    )
-    # Step 4: Create an agent
-    agent = Agent(
-      name="Hamna",
-      instructions="You are Hamna, a personal assistant. You can answer questions, provide information, and assist with various tasks. Always respond in a helpful and friendly manner.",
-    )
-    cl.user_session.set("history",[])
-    cl.user_session.set("run_config", run_config)
-    """Set up the chat session when a user connects."""
-    cl.user_session.set("agent", agent)
-    # Send a welcome message when the chat starts
-    await cl.Message(content="Hello! I am Hamna, your personal assistant. How can I help you today?").send()
-
-@cl.on_message
-async def main(message: cl.Message):
-    """Process incoming messages and generate responses."""  
-    history = cl.user_session.get("history",[])
-    # save the user Message in the hstroy .
-    # Append the user's message to the history.
-    history.append({"role": "user", "content": message.content})  
-    msg = cl.Message(content="")
-    await msg.send()  
-    agent: Agent = cast(Agent, cl.user_session.get("agent"))
-    config: RunConfig = cast(RunConfig, cl.user_session.get("run_config"))
-    
-    try:
-        print("\n[CALLING_AGENT_WITH_CONTEXT]\n", history, "\n")
-        # Run the agent with streaming enabled
-        result = Runner.run_streamed(agent, history, run_config=config)
-
-        # Stream the response token by token
-        async for event in result.stream_events():
-            if event.type == "raw_response_event" and hasattr(event.data, 'delta'):
-                token = event.data.delta
-                await msg.stream_token(token)
-
-        # Append the assistant's response to the history.
-        history.append({"role": "assistant", "content": msg.content})
-
-        # Update the session with the new history.
-        cl.user_session.set("chat_history", history)
-
-        # Optional: Log the interaction
-        print(f"User: {message.content}")
-        print(f"Assistant: {msg.content}")
-  
-    except Exception as e:
-        await cl.Message(content={str(e)}).send()
-        print(f"Error:{str(e)}")
-
- #   await cl.Message(content=result.final_output).send()  # Send the result back to the user
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+
+# We create a gemini provider client 
+
+external_client = AsyncOpenAI(
+    api_key=gemini_api_key,
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+)
+model = OpenAIChatCompletionsModel(
+    model="gemini-2.5-pro",
+    openai_client=external_client,
+)
+
+run_config = RunConfig(
+    model = model ,
+    model_provider = external_client,
+    tracing_disabled=True,
+)    
+def basic_dynamic( context: RunContextWrapper, agent: Agent) -> str:
+    return f"You are {agent.name}. You give the user information about the user based on the context provided."
+@dataclass 
+class Information:
+    name : str 
+    age :int 
+    email: str 
+
+@function_tool
+async def get_information(Wrapper : RunContextWrapper[Information])-> str:
+    # print("Retrieving user information from context...")
+    # print(f"\n Context received: {Wrapper} \n ")
+    user_info1 = f"The name of user is {Wrapper.context.name}, age is {Wrapper.context.age}, email is {Wrapper.context.email}."
+    # print(f"Returning: {user_info1}")
+    return user_info1
+
+
+async def main():
+    # Create an agent with the model and function tool 
+    agent : Agent = Agent(
+        name = "InformationAgent",
+        instructions = basic_dynamic,
+        tools=[get_information]
+    )    
+
+    user_info = Information("Abdullah",18,"muhammadabdullah51700@gmail.com")
+    print(f"Created user info: {user_info}")
+    result = Runner.run_streamed(starting_agent=agent ,input = "What is your name? How can you help me ?", run_config=run_config , context=user_info)
+    print("Final output:")
+    async for event in result.stream_events():
+        if event.type == "raw_response_event" and isinstance(event.data, ResponseTextDeltaEvent):
+            print(event.data.delta, end="", flush=True)
+if __name__ == "__main__":
+    asyncio.run(main())

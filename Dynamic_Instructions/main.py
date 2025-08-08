@@ -4,7 +4,6 @@ import asyncio
 from dotenv import load_dotenv , find_dotenv
 from dataclasses import dataclass
 
-
 # load the environment variables
 load_dotenv(find_dotenv())
 
@@ -25,35 +24,37 @@ run_config = RunConfig(
     model = model ,
     model_provider = external_client,
     tracing_disabled=True,
-) 
-@dataclass
-class User:
-    name : str
-    email : str
-    
-@function_tool    
-def get_user_info(context: RunContextWrapper[User]) -> str:
-    return f"The name of the user is {context.context.name} and the email is {context.context.email}."
-# It is the System Prompt 
-def basic_dynamic(context: RunContextWrapper[User], agent: Agent) -> str:
-    return f"You are {agent.name}.You give the user information about the user based on the context provided."
+)    
+def basic_dynamic( context: RunContextWrapper, agent: Agent) -> str:
+    return f"You are {agent.name}. You give the user information about the user based on the context provided."
+@dataclass 
+class Information:
+    name : str 
+    age :int 
+    email: str 
+
+@function_tool
+async def get_information(Wrapper : RunContextWrapper[Information])-> str:
+    print("Retrieving user information from context...")
+
+    user_info1 = f"The name of user is {Wrapper.context.name}, age is {Wrapper.context.age}, email is {Wrapper.context.email}."
+
+    return user_info1
 
 
-# Create an agent with the model and function tool    
-agent = Agent(
-    name="Dynamic Agent",
-    instructions=basic_dynamic , 
-    tools=[get_user_info]
-)  
-async def main1():
-    user = User("Abdullah", "muhammadabdullah51700@gmail.com")
-    result = await Runner.run(agent,"What is the email of Abdullah?", run_config=run_config,context=user)
+async def main():
+    # Create an agent with the model and function tool 
+    agent : Agent = Agent(
+        name = "InformationAgent",
+        instructions = basic_dynamic,
+        tools=[get_information]
+    )    
+
+    user_info = Information("Abdullah",18,"muhammadabdullah51700@gmail.com")
+    print(f"Created user info: {user_info}")
+    result = await Runner.run(starting_agent=agent ,input = "What is your name? How can you help me ?", run_config=run_config , context=user_info)
     print("Final output:")
     print(result.final_output)
-    data = agent.instructions
-    print(data)
-
+    print(agent.instructions)
 if __name__ == "__main__":
-    asyncio.run(main1())
-  
-    
+    asyncio.run(main())  
