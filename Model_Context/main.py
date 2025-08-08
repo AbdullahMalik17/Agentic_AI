@@ -33,16 +33,18 @@ class Information:
 
 @function_tool
 async def get_information(Wrapper : RunContextWrapper[Information])-> str:
-    print("Retrieving user information from context...")
-    print(f"\n Context received: {Wrapper} \n ")
+    # print("Retrieving user information from context...")
+    # print(f"\n Context received: {Wrapper} \n ")
     user_info1 = f"The name of user is {Wrapper.context.name}, age is {Wrapper.context.age}, email is {Wrapper.context.email}."
-    print(f"Returning: {user_info1}")
+    # print(f"Returning: {user_info1}")
     return user_info1
 
 
 async def main():
-    # Create an agent with the model and function tool    
-    agent = Agent(
+    # Create an agent with the model and function tool
+  
+        
+    agent : Agent = Agent(
         name = "InformationAgent",
         tools=[get_information]
     )    
@@ -52,6 +54,7 @@ async def main():
     result = await Runner.run(agent , "Please use the get_information tool to tell me about Abdullah's age and email. ", run_config=run_config , context=user_info)
     print("Final output:")
     print(result.final_output)
+    print(agent.instructions)
 if __name__ == "__main__":
     asyncio.run(main())
 

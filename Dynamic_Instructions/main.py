@@ -3,7 +3,7 @@ import os
 import asyncio
 from dotenv import load_dotenv , find_dotenv
 from dataclasses import dataclass
-from typing import Callable
+
 
 # load the environment variables
 load_dotenv(find_dotenv())
@@ -26,27 +26,34 @@ run_config = RunConfig(
     model_provider = external_client,
     tracing_disabled=True,
 ) 
-@dataclass   
-class User_Info :
-   name : str
-   email:str
-# Here are the tools     
-@function_tool
-def user_information(local_context: RunContextWrapper[User_Info])->str :
-    print(local_context)
-    return f"The name of user is {local_context.context.name} and the email is {local_context.context.email}."
-# These are the system instructions for the agent      
-def system_prompt(local_context: RunContextWrapper[User_Info] , agent)->str :
-    return f"You are a {agent.name} . Give the instruction about the user . "
-        # Create an agent with the model and function tool    
-agent = Agent(
-    name = "InformationAgent",
-    instructions="",
-    tools=[user_information],
-)    
-user_info = User_Info("Abdullah","muhammadabdullah@gmail.com")
-result = Runner.run_sync(agent,"What is the gmail of user . Tell me by using tool", run_config=run_config ,context=user_info )
-print("Final output:")
-print(result.final_output)
+@dataclass
+class User:
+    name : str
+    email : str
+    
+@function_tool    
+def get_user_info(context: RunContextWrapper[User]) -> str:
+    return f"The name of the user is {context.context.name} and the email is {context.context.email}."
+# It is the System Prompt 
+def basic_dynamic(context: RunContextWrapper[User], agent: Agent) -> str:
+    return f"You are {agent.name}.You give the user information about the user based on the context provided."
 
+
+# Create an agent with the model and function tool    
+agent = Agent(
+    name="Dynamic Agent",
+    instructions=basic_dynamic , 
+    tools=[get_user_info]
+)  
+async def main1():
+    user = User("Abdullah", "muhammadabdullah51700@gmail.com")
+    result = await Runner.run(agent,"What is the email of Abdullah?", run_config=run_config,context=user)
+    print("Final output:")
+    print(result.final_output)
+    data = agent.instructions
+    print(data)
+
+if __name__ == "__main__":
+    asyncio.run(main1())
+  
     
