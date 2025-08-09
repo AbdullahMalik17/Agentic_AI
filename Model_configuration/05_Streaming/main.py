@@ -3,10 +3,11 @@ import os
 import asyncio
 from dotenv import load_dotenv , find_dotenv
 from dataclasses import dataclass
-from openai.types.responses import ResponseTextDeltaEvent
+from agents import set_default_openai_api
 
 # load the environment variables
 load_dotenv(find_dotenv())
+set_default_openai_api("chat_completions")
 
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 
@@ -56,7 +57,7 @@ async def main():
     result = Runner.run_streamed(starting_agent=agent ,input = "What is your name? How can you help me ?", run_config=run_config , context=user_info)
     print("Final output:")
     async for event in result.stream_events():
-        if event.type == "raw_response_event" and isinstance(event.data, ResponseTextDeltaEvent):
+        if event.type == "raw_response_event" and hasattr(event.data, "delta"):
             print(event.data.delta, end="", flush=True)
 if __name__ == "__main__":
     asyncio.run(main())

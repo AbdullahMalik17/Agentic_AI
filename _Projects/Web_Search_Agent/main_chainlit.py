@@ -1,13 +1,15 @@
 import os
 import asyncio
 import chainlit as cl 
-from agents import Agent, Runner, AsyncOpenAI , OpenAIChatCompletionsModel , RunConfig , function_tool , ModelSettings , RunContextWrapper
+from agents import Agent, Runner, AsyncOpenAI , OpenAIChatCompletionsModel , RunConfig , function_tool , ModelSettings , RunContextWrapper, set_default_openai_api
 from dotenv import load_dotenv, find_dotenv 
 from typing import cast
 from tavily import AsyncTavilyClient
 from dataclasses import dataclass 
 # Load environment variables
 load_dotenv(find_dotenv())
+# Force Agents SDK to use Chat Completions API to avoid Responses API event types
+set_default_openai_api("chat_completions")
 
 # It is an API_key of Gemini 
 gemini_api_key = os.getenv("GEMINI_API_KEY")  
@@ -48,8 +50,30 @@ async def handle_message():
     @function_tool 
     async def web_search(query: str):
         """Search the web using Tavily."""
-        results = await tavily_client.search(query)
-        return results
+        try:
+            # Await the Tavily search response
+            response = await tavily_client.search(query=query)
+
+            # Initialize the formatted results list
+            formatted_results = []
+
+            # Iterate through the results and format them
+            for result in response['results']:
+                result_text = f"""
+### {result['title']}
+{result['content']}
+##### [Source]({result['url']})
+---
+"""
+                formatted_results.append(result_text)
+
+            # Join all results into a single string
+            all_results = "\n".join(formatted_results)
+            return all_results
+
+        except Exception as e:
+            # Handle errors gracefully
+            return f"An error occurred during the web search: {str(e)}"
 
     @function_tool
     async def get_info(Wrapper: RunContextWrapper[Info]) -> str:
@@ -61,7 +85,7 @@ async def handle_message():
             f"and his sister name is {Wrapper.context.sister_name}."
         )
     def basic_dynamic(Wrapper: RunContextWrapper, agent: Agent) -> str:
-        print(f"\n[CALLING_BASIC_DYNAMIC]\nContext: {Wrapper}\nAgent: {agent}\n")
+        # print(f"\n[CALLING_BASIC_DYNAMIC]\nContext: {Wrapper}\nAgent: {agent}\n")
         return f"You are {agent.name}.You should do deep to the User prompt and provide the latest knowledge by using web search tool . You give the user information about the user based on the context provided.Always respond in a helpful and friendly manner"
 # here I create Agent . 
     agent = Agent(

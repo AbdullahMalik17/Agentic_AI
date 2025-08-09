@@ -1,7 +1,6 @@
 import os
 import asyncio
-#from openai.types.response import ResposnseTextDeltaEvent
-from openai.types.responses import ResponseTextDeltaEvent 
+from agents import set_default_openai_api
 import chainlit as cl 
 from agents import Agent, Runner, AsyncOpenAI, OpenAIChatCompletionsModel, RunConfig
 from dotenv import load_dotenv, find_dotenv 
@@ -10,6 +9,7 @@ from agents.tool import function_tool
 
 # Load environment variables
 load_dotenv(find_dotenv())
+set_default_openai_api("chat_completions")
 gemini_api_key = os.getenv("GEMINI_API_KEY")  
 if not gemini_api_key:
     raise ValueError("Gemini API key is not set . Please , ensure that it is defined in your env file.")

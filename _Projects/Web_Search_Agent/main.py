@@ -1,11 +1,13 @@
 import os
 import asyncio
-from agents import Agent,ItemHelpers, Runner, AsyncOpenAI , OpenAIChatCompletionsModel , RunConfig , function_tool , ModelSettings , RunContextWrapper
+from agents import Agent,ItemHelpers, Runner, AsyncOpenAI , OpenAIChatCompletionsModel , RunConfig , function_tool , ModelSettings , RunContextWrapper, set_default_openai_api
 from dotenv import load_dotenv, find_dotenv 
 from tavily import AsyncTavilyClient
 from dataclasses import dataclass 
 # Load environment variables
 load_dotenv(find_dotenv())
+# Force Agents SDK to use Chat Completions API to avoid Responses API event types
+set_default_openai_api("chat_completions")
 
 # It is an API_key of Gemini 
 gemini_api_key = os.getenv("GEMINI_API_KEY")  
@@ -89,7 +91,7 @@ async def main():
     )
     result = Runner.run_streamed(
         starting_agent=agent,
-        input="what is the html",
+        input="give me information of my profile . make a card according to it ",
         run_config=run_config,
         context=user_data,
 
@@ -116,5 +118,5 @@ async def main():
             else:
                 pass  # Ignore other event types
 
-    print("=== Run complete ===")
-  
+    print("=== Run complete ===")  
+asyncio.run(main())  
