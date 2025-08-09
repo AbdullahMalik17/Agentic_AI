@@ -51,7 +51,7 @@ async def handle_message():
         return results
 
     @function_tool
-    async def get_info(Wrapper: RunContextWrapper) -> str:
+    async def get_info(Wrapper: RunContextWrapper[Info]) -> str:
         """Return the user's profile information from the run context."""
         return (
             f"The name of user is {Wrapper.context.name}, "

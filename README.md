@@ -1,45 +1,133 @@
-# Agentic_AI
-It means that we have the application that works autonomously . I give him work then , he is responsible to do it .
-## Agent loop
-`Agent loop`: Built-in agent loop that handles calling tools, sending results to the LLM, and looping until the LLM is done.
+## Agentic AI Monorepo
 
-## API (Application Programme Interface)
-It helps us to get and send data to one another websites or devices . 
-It acts like an bridge between two devices or websites .
-# Chat completion API
-It enables conservational natural language model between user .
-# Virtual Environment
-It helps to install in only folder . 
-# Creating python environment 
-       python -m venv .venv
-# Activation of python environment
-       .venv\Scripts\activate
-# Commad to make a package for agent 
-        uv init --package name 
-# To run my project 
-        uv run name                  
+This repository contains multiple, focused examples and mini-projects for building Agentic AI apps with Chainlit and the OpenAI Agents SDK. Each subproject is self-contained and runnable with `uv`.
 
-This name is taken from through .toml file from script section  
-# Cloud Native Technology
-Cloud-native technology refers to the approach, tools, and processes used to build applications that fully embrace the advantages of cloud computing—such as scalability, flexibility, and automation. Simply put, these apps are architected, developed, and run specifically to thrive in cloud environments .    
-## Core Concepts
-- `Microservices` It divides the tasks into smaller tasks to perform it efficiently .
-- `Container & Orchestration`Containerization (e.g., Docker) ensures services run consistently across environments. Orchestrators (commonly Kubernetes) manage deployment, scaling, updates, and self-healing . 
-## ✅ Benefits
-1. Scalability & Elasticity: Only scale parts that need it, saving costs .
+### Prerequisites
+- Python 3.13+
+- uv (Rust-based Python package manager) — install from `https://astral.sh/uv`
+- Optional: Playwright browsers for the computer-use demo
 
-2. Speed & Agility: Smaller components, automated pipelines = faster release cycles 
+### Environment variables (.env)
+Create a `.env` file at the repo root or in each project folder that needs it:
 
-3. Resilience: Isolated services prevent cascading failures; auto-healing infrastructure 
+```
+GEMINI_API_KEY=your_gemini_key_here
+TAVILY_API_KEY=your_tavily_key_here
+```
 
-4. Portability & Avoid Vendor Lock‑In: Containers and standard APIs enable multicloud or hybrid setups 
-# Serverless Computing 
-When we use the virtual computing , then we have to pay for only this time which we use it . This is called Serverless Computing . 
+Notes:
+- Gemini models are accessed via the OpenAI-compatible Gemini endpoint in these projects.
+- Tavily is used for web search in relevant demos.
 
-# We will make the agentic who is capable for following things:
-- AI First 
-- Agent Native Cloud First    
-- Cloud Anywhere
-- Develop anywhere
-- Open Core and Manage Edge
+### How to run projects
+Use `uv run` so dependencies from each project's `pyproject.toml` and `uv.lock` are resolved automatically. Always run commands from the project folder unless stated otherwise.
+
+#### 1) Web Search Agent (Chainlit)
+- Folder: `_Projects/Web_Search_Agent`
+- Features: tool calling (Tavily web search), context-aware `get_info` tool, streaming responses
+
+Commands:
+```
+cd _Projects/Web_Search_Agent
+uv run chainlit run main.py --watch
+```
+
+#### 2) Multi-Agent Code Assistant (Chainlit)
+- Folder: `_Projects/Code_Assistant_agent`
+- Features: triage + expert agents (Web, Mobile, Agentic AI), agents-as-tools, Tavily search tool
+
+Commands:
+```
+cd _Projects/Code_Assistant_agent
+uv run chainlit run main.py --watch
+```
+
+#### 3) Function Calling (Chainlit)
+- Folder: `07_Function_Calling`
+- Features: simple function tools with streaming output
+
+Commands:
+```
+cd 07_Function_Calling
+uv run chainlit run main.py --watch
+```
+
+#### 4) Model Context (Console)
+- Folder: `Model_Context`
+- Features: `RunContextWrapper[T]` pattern for passing local context to tools
+
+Commands:
+```
+cd Model_Context
+uv run python main.py
+```
+
+#### 5) Streaming Demo (Console)
+- Folder: `Model_configuration/05_Streaming`
+- Features: token streaming via `ResponseTextDeltaEvent`
+
+Commands:
+```
+cd Model_configuration/05_Streaming
+uv run python main.py
+```
+
+#### 6) Tavily Search Tool (Chainlit)
+- Folder: `09_tools/web_search_tool_in_tavily`
+- Features: direct Tavily integration and formatted result rendering
+
+Commands:
+```
+cd 09_tools/web_search_tool_in_tavily
+uv run chainlit run main.py --watch
+```
+
+#### 7) Computer Use Tool (Console + local browser)
+- Folder: `09_tools/computer_tools`
+- Features: local Playwright-driven browser automation via `ComputerTool`
+
+First-time setup:
+```
+cd 09_tools/computer_tools
+uv add playwright
+python -m playwright install
+```
+
+Run:
+```
+uv run python main.py
+```
+
+#### 8) Chainlit Starter (Chainlit)
+- Folder: `02_chailit`
+
+Commands:
+```
+cd 02_chailit
+uv run chainlit run app.py --watch
+```
+
+#### 9) MCP Notes (Console)
+- Folder: `08_MCP`
+
+Commands:
+```
+cd 08_MCP
+uv run python main.py
+```
+
+### Troubleshooting
+- Cannot instantiate typing.Union: Ensure tool signatures use `RunContextWrapper[T]` and access data via `Wrapper.context` (not `Wrapper.data`). Avoid conflicting names like `from multiprocessing import context`.
+- Tools not called: Verify `Agent(..., tools=[...])` is a list (no trailing commas creating tuples). If using Chainlit, restart the server after code changes.
+- Tavily errors: Check `TAVILY_API_KEY` and network connectivity.
+- Gemini model errors: Confirm `GEMINI_API_KEY` and model name (e.g., `gemini-2.5-flash`).
+
+### Repo notes
+- Each folder contains its own `pyproject.toml` and `uv.lock`. Running with `uv run` inside that folder will install and use the correct dependencies.
+- Chainlit apps can be accessed in the browser at the URL printed in the terminal after startup.
+
+### License and Contact
+- License: MIT
+- Author: Abdullah Malik
+- GitHub: @AbdullahMalik17
         
