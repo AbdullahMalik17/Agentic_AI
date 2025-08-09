@@ -1,3 +1,4 @@
+
 import os
 import asyncio
 import chainlit as cl 
@@ -12,7 +13,7 @@ load_dotenv(find_dotenv())
 set_default_openai_api("chat_completions")
 
 # It is an API_key of Gemini 
-gemini_api_key = os.getenv("GEMINI_API_KEY")  
+gemini_api_key = os.environ.get("GEMINI_API_KEY") 
 if not gemini_api_key:
     raise ValueError("Gemini API key is not set . Please , ensure that it is defined in your env file.")
 # It is an API key of Tavily

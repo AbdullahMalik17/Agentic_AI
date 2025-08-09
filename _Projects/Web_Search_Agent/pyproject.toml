@@ -9,4 +9,5 @@ dependencies = [
     "python-dotenv>=1.0.1",
     "openai-agents>=0.2.5",
     "tavily-python>=0.7.10",
+    "openai==1.98.0",
 ]

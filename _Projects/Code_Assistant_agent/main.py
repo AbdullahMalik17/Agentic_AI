@@ -1,116 +1,193 @@
+import os
+from dotenv import load_dotenv, find_dotenv
+
 import chainlit as cl
-# this takes the data from prompt files 
-from system_prompt import web_developer_prompt, mobile_developer_prompt, agentic_ai_developer_prompt, panacloud_prompt
-from chainlit import on_message , on_chat_start
-from dotenv import load_dotenv , find_dotenv
-import os 
-import asyncio
-from agents import Agent , Runner ,AsyncOpenAI, set_default_openai_client , set_tracing_disabled , set_default_openai_api , function_tool, ModelSettings, OpenAIChatCompletionsModel
+from chainlit import on_message, on_chat_start
+
+from agents import (
+    Agent,
+    Runner,
+    AsyncOpenAI,
+    set_default_openai_client,
+    set_tracing_disabled,
+    set_default_openai_api,
+    function_tool,
+    ModelSettings,
+    OpenAIChatCompletionsModel,
+    RunContextWrapper,
+)
 from tavily import AsyncTavilyClient
+
+# this takes the data from prompt files
+from system_prompt import (
+    web_developer_prompt,
+    mobile_developer_prompt,
+    agentic_ai_developer_prompt,
+    panacloud_prompt,
+)
+
+from dataclasses import dataclass
+# --- Load Environment Variables ---
 load_dotenv(find_dotenv())
-api_key = os.getenv("GEMINI_API_KEY")
-external_client = AsyncOpenAI( 
-    api_key= api_key,
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+
+# --- Model and Client Configuration ---
+# Note: "gemini-2.0-flash" seems like a custom or placeholder name.
+# Ensure it matches the actual model available at your endpoint.
+# Common models are "gemini-1.5-flash", "gemini-1.5-pro", etc.
+MODEL_NAME = "gemini-2.5-flash" 
+TEMPERATURE = 1.8
+
+# Configure the client to use the Gemini API via an OpenAI-compatible endpoint
+external_client = AsyncOpenAI(
+    api_key=GEMINI_API_KEY,
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
 )
 
 set_default_openai_client(external_client)
 set_tracing_disabled(True)
 set_default_openai_api("chat_completions")
-# This is the Tavily client for web search
-tavily_api_key = os.getenv("TAVILY_API_KEY")
-tavily_client = AsyncTavilyClient(api_key=tavily_api_key)
-#we will make the on chat data
+
+# Initialize Tavily client for web search
+tavily_client = AsyncTavilyClient(api_key=TAVILY_API_KEY)
+
+
+# --- Tool Definitions ---
+@function_tool
+async def web_search(query: str) -> dict:
+    """Search the web using Tavily for recent and relevant information."""
+    if not tavily_client:
+        return {"error": "Tavily client is not initialized."}
+    try:
+        results = await tavily_client.search(query, search_depth="advanced")
+        return results
+    except Exception as e:
+        return {"error": f"An error occurred during web search: {e}"}
+
+@dataclass
+class Info:
+    name : str
+    description: str
+
+@function_tool
+def get_info(Wrapper:RunContextWrapper[Info])->str:
+    """Retrieve the name and description from the context."""
+    return f"The name of user is {Wrapper.context.name} and the description is {Wrapper.context.description}."
 @on_chat_start
+
 async def start():
-    """Set up the chat session when a user connects."""
-    cl.user_session.set("history",[])
-    await cl.Message(content="Welcome to coder AI Assistant! How can you help you today?").send()
+    """
+    Initializes the agent and tool setup for a new chat session.
+    This function is called once when a user starts a new chat.
+    """
+    cl.user_session.set("history", [])
+
+    # --- Agent Definitions ---
+    # These agents are created once per session for efficiency.
+    common_model_settings = ModelSettings(temperature=TEMPERATURE, tool_choice="auto")
+    common_model = OpenAIChatCompletionsModel(
+        openai_client=external_client, model=MODEL_NAME
+    )
+
+    web_developer = Agent(
+        name="Web_Developer",
+        instructions=web_developer_prompt,
+        model=common_model,
+        handoff_description="An expert in web development technologies like React,Next.js, Node.js, and Python.",
+        tools=[web_search],
+        model_settings=common_model_settings,
+    )
+
+    mobile_developer = Agent(
+        name="Mobile_Developer",
+        instructions=mobile_developer_prompt,
+        model=common_model,
+        handoff_description="An expert in mobile app development for iOS and Android.",
+        tools=[web_search],
+        model_settings=common_model_settings,
+    )
+
+    devops_agent = Agent(
+        name="DevOps_Expert",
+        instructions="You are a helpful assistant focused on DevOps. Provide clear, concise information about DevOps concepts, tools (like Docker, Kubernetes, CI/CD), and best practices. Generate code examples when necessary.",
+        model=common_model,
+        tools=[web_search],
+        model_settings=common_model_settings,
+    )
+
+    openai_agent = Agent(
+        name="OpenAI_Expert",
+        instructions="You are a helpful assistant with deep knowledge of OpenAI. Your sole purpose is to provide clear and concise answers about OpenAI's models, APIs, and platform. Do not discuss unrelated topics.",
+        model=common_model,
+        tools=[web_search],
+        model_settings=common_model_settings,
+    )
+
+    # Convert agents to tools for hierarchical agent structures
+    devops_tool = devops_agent.as_tool(
+        tool_name="DevOps_Tool",
+        tool_description="Use this tool for any questions related to DevOps, CI/CD, Docker, or Kubernetes.",
+    )
+    openai_tool = openai_agent.as_tool(
+        tool_name="OpenAI_Tool",
+        tool_description="Use this tool for any questions about OpenAI, its models (like GPT-4), or its APIs.",
+    )
+
+    agentic_ai_developer = Agent(
+        name="Agentic_AI_Developer",
+        instructions=agentic_ai_developer_prompt,
+        model=common_model,
+        handoff_description="An expert in building agentic AI systems and using advanced AI frameworks.",
+        tools=[devops_tool, openai_tool, web_search],
+        model_settings=common_model_settings,
+    )
+
+    # Triage Agent: The entry point for all user queries
+    triage_agent = Agent(
+        name="PanaCloud_Triage",
+        instructions=panacloud_prompt,
+        model=common_model,
+        handoffs=[web_developer, mobile_developer, agentic_ai_developer],
+        tools=[web_search, get_info],
+        # 'required' forces the model to choose a handoff, which is good for a triage agent.
+        model_settings=ModelSettings(temperature=TEMPERATURE, tool_choice="required"),
+    )
+
+    # Store the main entry-point agent in the user session
+    cl.user_session.set("triage_agent", triage_agent)
+
+    await cl.Message(
+        content="Welcome to the Coder AI Assistant! How can I help you today?"
+    ).send()
+
 
 @on_message
-async def main(message :cl.Message):
-    @function_tool
-    async def web_search(query: str):
-        """Search the web using Tavily."""
-        results = await tavily_client.search(query)
-        return results 
+async def main(message: cl.Message):
+    """
+    Handles incoming user messages and runs the agentic workflow.
+    """
+    triage_agent = cl.user_session.get("triage_agent")
+    history = cl.user_session.get("history")
 
-    web_developer: Agent = Agent(
-        name="Web DEV",
-        instructions=web_developer_prompt,
-        model=OpenAIChatCompletionsModel(openai_client=external_client, model="gemini-2.0-flash"),
-        handoff_description="Web developer expert",
-        tools=[web_search],
-        model_settings=ModelSettings(temperature=1.9,tool_choice="auto")
-   )
-    mobile_developer: Agent = Agent(
-        name="Mobile DEV",
-        instructions=mobile_developer_prompt,
-        model=OpenAIChatCompletionsModel(openai_client=external_client, model="gemini-2.0-flash"),
-        handoff_description="mobile app developer expert",
-        tools=[web_search],
-        model_settings=ModelSettings(temperature=1.9,tool_choice="auto")
-    )
-    # Here we make th agent that it is used as tools .
-    devops_agent: Agent = Agent(
-        name="DevOps Expert",
-        instructions="""You are a helpful assistant. You only tell the user about DevOps. Generate a code example if necessary. Your role is to provide clear and concise information about DevOps concepts, tools (like Docker, Kubernetes, CI/CD pipelines), and best practices.""",
-        model=OpenAIChatCompletionsModel(openai_client=external_client, model="gemini-2.0-flash"),
-        tools=[web_search],
-        model_settings=ModelSettings(temperature=1.9,tool_choice="auto")
-    )
-    openai_agent: Agent = Agent(
-        name="OpenAI Expert",
-        instructions="""You are a helpful assistant. Your sole purpose is to provide information about OpenAI. When asked a question, provide a clear and concise answer based on your knowledge of OpenAI. Do not discuss topics unrelated to OpenAI.""",
-        model=OpenAIChatCompletionsModel(openai_client=external_client, model="gemini-2.0-flash"),
-        tools=[web_search],
-        model_settings=ModelSettings(temperature=1.9,tool_choice="auto")        
-    )
-    devops_tool = devops_agent.as_tool(tool_name="DevOps_Tool", tool_description="A tool that provides information about DevOps.")
-    openai_tool = openai_agent.as_tool(tool_name="OpenAI_Tool", tool_description="A tool that provides information about OpenAI")
-    # Using these agents as tools in the agentic AI developer agent .
-    agenticai_developer: Agent = Agent(
-        name="Agentic DEV",
-        instructions=agentic_ai_developer_prompt,
-        model=OpenAIChatCompletionsModel(openai_client=external_client, model="gemini-2.0-flash"),
-        handoff_description="Agentic AI developer expert . ",
-        tools=[devops_tool, openai_tool, web_search],
-        model_settings=ModelSettings(temperature=1.9,tool_choice="auto")  
-        ) 
-    # Triage Agent .venv\Scripts\activate
-    panacloud: Agent = Agent(
-        name="Panacloud",
-        instructions=panacloud_prompt,
-        model=OpenAIChatCompletionsModel(openai_client=external_client, model="gemini-2.0-flash"),
-        handoffs=[web_developer, mobile_developer, agenticai_developer],
-        tools=[web_search],
-        model_settings=ModelSettings(temperature=1.9,tool_choice="required")
-    )
-  
-    history = cl.user_session.get("history",[])
-    # save the user Message in the hstroy .
-    # Append the user's message to the history.
- 
+    # Append the user's message to the history
+    history.append({"role": "user", "content": message.content})
+
     try:
-        # 1) Append user turn to history
-        history.append({"role": "user", "content": message.content})
-        print("\n[CALLING_AGENT_WITH_CONTEXT]\n", history, "\n")
+        info = Info("Abdullah","I am a software engineer with expertise in AI and web development.")
+            
+        # Run the agent with the latest message and context
+        result = await Runner.run(starting_agent=triage_agent,input=history,context=info)
+        final_output = result.final_output or "I am sorry, I could not process your request."
 
-        # 2) Run the agent with the user's message string as input
-        result = await Runner.run(panacloud,history)
+        # Send the assistant's message to the UI
+        await cl.Message(content=final_output).send()
 
-        # 3) Send assistant message to UI
-        await cl.Message(content=result.final_output or "").send()
-
-        # 4) Append assistant turn to history and persist
-        history.append({"role": "assistant", "content": result.final_output or ""})
+        # Append the assistant's turn to history and persist
+        history.append({"role": "assistant", "content": final_output})
         cl.user_session.set("history", history)
 
-        print(f"User: {message.content}")
-        print(f"Assistant: {result.final_output}")
-  
     except Exception as e:
-        await cl.Message(content=str(e)).send()
-        print(f"Error:{str(e)}")
-         
-        
+        error_message = f"An error occurred: {str(e)}"
+        await cl.Message(content=error_message).send()
+        print(error_message)

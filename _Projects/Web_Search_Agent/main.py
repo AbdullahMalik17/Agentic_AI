@@ -87,14 +87,12 @@ async def main():
         # instructions="You are DeepSearch Agent . You can answer questions, provide information and give Example(Code) if necessary . For latest information, you can search through websearch tool. Always respond in a helpful and friendly manner",
         tools=[web_search, get_info],  # <- removed trailing comma
         model_settings=ModelSettings(temperature=1.9, max_tokens=2000, tool_choice="auto"),
-        tool_use_behavior="stop_on_first_tool"
     )
     result = Runner.run_streamed(
         starting_agent=agent,
         input="give me information of my profile . make a card according to it ",
         run_config=run_config,
         context=user_data,
-
     )
 
     print("=== Run starting ===")
