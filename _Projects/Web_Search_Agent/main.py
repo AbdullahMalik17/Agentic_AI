@@ -1,7 +1,5 @@
 import os
 import asyncio
-#from openai.types.response import ResposnseTextDeltaEvent
-from openai.types.responses import ResponseTextDeltaEvent 
 from agents import Agent,ItemHelpers, Runner, AsyncOpenAI , OpenAIChatCompletionsModel , RunConfig , function_tool , ModelSettings , RunContextWrapper
 from dotenv import load_dotenv, find_dotenv 
 from tavily import AsyncTavilyClient
@@ -15,6 +13,8 @@ if not gemini_api_key:
     raise ValueError("Gemini API key is not set . Please , ensure that it is defined in your env file.")
 # It is an API key of Tavily
 tavily_api_key = os.getenv("TAVILY_API_KEY")
+if not tavily_api_key:
+    raise ValueError("Tavily API key is not set. Please ensure TAVILY_API_KEY is defined in your .env file.")
 tavily_client = AsyncTavilyClient(api_key=tavily_api_key)
 # It is used to show the display message in the chat 
 # Step 1: Create a provider 
@@ -42,8 +42,22 @@ class Info:
 @function_tool 
 async def web_search(query: str):
     """Search the web using Tavily."""
-    results = await tavily_client.search(query)
-    return results
+    response = await tavily_client.search(query)
+
+    formatted_results = []
+    
+    for result in response['results']:
+        result_text = f"""
+### {result['title']}
+{result['content']}
+##### [Source]({result['url']})
+---
+"""
+        formatted_results.append(result_text)
+    
+    # Join all results and send as one message
+    all_results = "\n".join(formatted_results)
+    return all_results
 
 @function_tool
 async def get_info(Wrapper: RunContextWrapper[Info]) -> str:
@@ -70,11 +84,12 @@ async def main():
         instructions=basic_dynamic,  
         # instructions="You are DeepSearch Agent . You can answer questions, provide information and give Example(Code) if necessary . For latest information, you can search through websearch tool. Always respond in a helpful and friendly manner",
         tools=[web_search, get_info],  # <- removed trailing comma
-        model_settings=ModelSettings(temperature=1.9, max_tokens=2000, tool_choice="auto")
+        model_settings=ModelSettings(temperature=1.9, max_tokens=2000, tool_choice="auto"),
+        tool_use_behavior="stop_on_first_tool"
     )
     result = Runner.run_streamed(
         starting_agent=agent,
-        input="What is my profile info? You may use tools.",
+        input="what is the html",
         run_config=run_config,
         context=user_data,
 
@@ -102,5 +117,4 @@ async def main():
                 pass  # Ignore other event types
 
     print("=== Run complete ===")
-if __name__ == "__main__":
-    asyncio.run(main())    
+  

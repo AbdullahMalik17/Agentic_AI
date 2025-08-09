@@ -25,7 +25,7 @@ TAVILY_API_KEY=your_tavily_key_here
 ### Install & Run
 ```
 cd _Projects/Web_Search_Agent
-uv run chainlit run main.py --watch
+uv run chainlit run main_chainlit.py --watch
 ```
 Open the URL printed by Chainlit in your terminal.
 
