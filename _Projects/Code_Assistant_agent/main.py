@@ -4,6 +4,7 @@ from dotenv import load_dotenv, find_dotenv
 import chainlit as cl
 from chainlit import on_message, on_chat_start
 
+
 from agents import (
     Agent,
     Runner,
@@ -55,15 +56,24 @@ tavily_client = AsyncTavilyClient(api_key=TAVILY_API_KEY)
 
 # --- Tool Definitions ---
 @function_tool
-async def web_search(query: str) -> dict:
-    """Search the web using Tavily for recent and relevant information."""
+async def web_search(query: str) -> str:
+    """Search the web using Tavily for latest Information. Returns a formatted string of the results."""
     if not tavily_client:
-        return {"error": "Tavily client is not initialized."}
+        return "Tavily client is not initialized."
     try:
-        results = await tavily_client.search(query, search_depth="advanced")
-        return results
+        response = await tavily_client.search(query=query, search_depth="advanced")
+
+        # Format results for better readability
+        formatted_results = []
+        for result in response.get('results', []):
+            result_text = f"### {result.get('title')}\n{result.get('content')}\n[Source]({result.get('url')})\n---\n"
+            formatted_results.append(result_text)
+
+        if not formatted_results:
+            return "No results found from web search."
+        return "\n".join(formatted_results)
     except Exception as e:
-        return {"error": f"An error occurred during web search: {e}"}
+        return f"An error occurred during web search: {e}"
 
 @dataclass
 class Info:
@@ -72,8 +82,9 @@ class Info:
 
 @function_tool
 def get_info(Wrapper:RunContextWrapper[Info])->str:
-    """Retrieve the name and description from the context."""
+    """The name and description of user from the context."""
     return f"The name of user is {Wrapper.context.name} and the description is {Wrapper.context.description}."
+
 @on_chat_start
 
 async def start():
@@ -138,20 +149,20 @@ async def start():
         name="Agentic_AI_Developer",
         instructions=agentic_ai_developer_prompt,
         model=common_model,
-        handoff_description="An expert in building agentic AI systems and using advanced AI frameworks.",
+        handoff_description="An expert in building agentic AI systems and using advanced AI frameworks(openai sdk , Langchain/LanGraph , CrewAI).",
         tools=[devops_tool, openai_tool, web_search],
         model_settings=common_model_settings,
     )
 
     # Triage Agent: The entry point for all user queries
     triage_agent = Agent(
-        name="PanaCloud_Triage",
+        name="Bushra_Triage",
         instructions=panacloud_prompt,
         model=common_model,
         handoffs=[web_developer, mobile_developer, agentic_ai_developer],
         tools=[web_search, get_info],
         # 'required' forces the model to choose a handoff, which is good for a triage agent.
-        model_settings=ModelSettings(temperature=TEMPERATURE, tool_choice="required"),
+        model_settings=ModelSettings(temperature=TEMPERATURE, tool_choice="auto"),
     )
 
     # Store the main entry-point agent in the user session
@@ -169,6 +180,8 @@ async def main(message: cl.Message):
     """
     triage_agent = cl.user_session.get("triage_agent")
     history = cl.user_session.get("history")
+    msg = cl.Message(content="")
+    await msg.send() 
 
     # Append the user's message to the history
     history.append({"role": "user", "content": message.content})
@@ -177,17 +190,26 @@ async def main(message: cl.Message):
         info = Info("Abdullah","I am a software engineer with expertise in AI and web development.")
             
         # Run the agent with the latest message and context
-        result = await Runner.run(starting_agent=triage_agent,input=history,context=info)
-        final_output = result.final_output or "I am sorry, I could not process your request."
+        result = Runner.run_streamed(starting_agent=triage_agent,input=history,context=info)
+        # Stream the response token by token and surface tool outputs
+        async for event in result.stream_events():
+            if event.type == "raw_response_event" and hasattr(event.data, 'delta'):
+                token = event.data.delta
+                await msg.stream_token(token)
+            elif event.type == "run_item_stream_event":
+                item = getattr(event, "item", None)
+                if item and getattr(item, "type", "") == "tool_call_output_item":
+                    output_text = str(getattr(item, "output", ""))
+                    if output_text:
+                        await msg.stream_token(output_text)
 
-        # Send the assistant's message to the UI
-        await cl.Message(content=final_output).send()
-
-        # Append the assistant's turn to history and persist
-        history.append({"role": "assistant", "content": final_output})
+        # Finalize the streamed message and persist history
+        await msg.update()
+        history.append({"role": "assistant", "content": msg.content})
         cl.user_session.set("history", history)
 
     except Exception as e:
         error_message = f"An error occurred: {str(e)}"
+        print(e)
         await cl.Message(content=error_message).send()
         print(error_message)

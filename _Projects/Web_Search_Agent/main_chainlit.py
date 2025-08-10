@@ -1,8 +1,16 @@
 
 import os
-import asyncio
 import chainlit as cl 
-from agents import Agent, Runner, AsyncOpenAI , OpenAIChatCompletionsModel , RunConfig , function_tool , ModelSettings , RunContextWrapper, set_default_openai_api
+from agents import(
+    Agent,
+    Runner,
+    AsyncOpenAI ,
+    OpenAIChatCompletionsModel ,
+    RunConfig ,
+    function_tool ,
+    ModelSettings ,
+    RunContextWrapper,
+    set_default_openai_api)
 from dotenv import load_dotenv, find_dotenv 
 from typing import cast
 from tavily import AsyncTavilyClient

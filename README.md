@@ -126,6 +126,9 @@ uv run python main.py
 - Each folder contains its own `pyproject.toml` and `uv.lock`. Running with `uv run` inside that folder will install and use the correct dependencies.
 - Chainlit apps can be accessed in the browser at the URL printed in the terminal after startup.
 
+# Working of LLM 
+Two things are sent to LLM . One thing is System Instruction and another is Tool Call 
+
 ### License and Contact
 - License: MIT
 - Author: Abdullah Malik
