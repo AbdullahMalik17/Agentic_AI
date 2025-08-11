@@ -1,3 +1,4 @@
+import copy
 from agents import (Agent, Runner, AsyncOpenAI, OpenAIChatCompletionsModel, function_tool)
 import os
 from dotenv import load_dotenv, find_dotenv
@@ -32,7 +33,7 @@ def add(a: int | float, b: int | float) -> int | float:
 def subtract(a: int | float, b: int | float) -> int | float:
     """Returns the difference of two numbers."""
     return a - b
-
+ # Swallow Copy
 agent: Agent = Agent(
     name="Math Expert Agent",
     instructions="You are a math expert agent. You can solve any math problem and explain the solution step by step in an easy manner.",
@@ -43,12 +44,32 @@ agent: Agent = Agent(
 agent2: Agent = agent.clone(
     name="Math Expert Agent 2",
     instructions="You only give a simple response to the math problem without any explanation.",
-    model=OpenAIChatCompletionsModel(model="gemini-1.5-flash", openai_client=client),
-    tools=[add],
+    model=OpenAIChatCompletionsModel(model="gemini-1.5-flash", openai_client=client)
+)
+agent2.tools.append(add)
+
+# result = Runner.run_sync(agent, "What is the differentiate of x^2 + 3x + 5 ?")
+# result2 = Runner.run_sync(agent2, "What is the differentiate of x^2 + 3x + 5 ?")
+# print("The Result of the first agent is :", result)
+# print("=" * 50)
+# print("The Result of the second agent is :", result2)
+print(f"Agent Tools: {[tool.name for tool in agent.tools]}")
+print(f"Agent 2 Tools: {[tool.name for tool in agent2.tools]}")
+
+ # Deep Copy / Copy
+agent3: Agent = Agent(
+    name="Math Expert Agent",
+    instructions="You are a math expert agent. You can solve any math problem and explain the solution step by step in an easy manner.",
+    model=model,
+    tools=[subtract],
 )
 
-result = Runner.run_sync(agent, "What is the differentiate of x^2 + 3x + 5 ?")
-result2 = Runner.run_sync(agent2, "What is the differentiate of x^2 + 3x + 5 ?")
-print("The Result of the first agent is :", result)
-print("=" * 50)
-print("The Result of the second agent is :", result2)
+agent4: Agent = agent.clone(
+    name="Math Expert Agent 2",
+    instructions="You only give a simple response to the math problem without any explanation.",
+    model=OpenAIChatCompletionsModel(model="gemini-1.5-flash", openai_client=client),
+    tools=agent3.tools.copy()
+)
+agent4.tools.append(add)
+print(f"Agent 3 Tools: {[tool.name for tool in agent3.tools]}")
+print(f"Agent 4 Tools: {[tool.name for tool in agent4.tools]}")
