@@ -10,8 +10,6 @@ from agents import (
     Runner,
     AsyncOpenAI,
     set_default_openai_client,
-    set_tracing_disabled,
-    set_default_openai_api,
     function_tool,
     ModelSettings,
     OpenAIChatCompletionsModel,
@@ -29,29 +27,30 @@ from system_prompt import (
 
 from dataclasses import dataclass
 # --- Load Environment Variables ---
-load_dotenv(find_dotenv())
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+_:bool = load_dotenv(find_dotenv())
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+tavily_api_key= os.getenv("TAVILY_API_KEY")
+openai_api_key = os.getenv("OPENAI_API_KEY")
 
 # --- Model and Client Configuration ---
 # Note: "gemini-2.0-flash" seems like a custom or placeholder name.
 # Ensure it matches the actual model available at your endpoint.
 # Common models are "gemini-1.5-flash", "gemini-1.5-pro", etc.
-MODEL_NAME = "gemini-2.5-flash" 
+MODEL_NAME = "gemini-2.5-pro" 
 TEMPERATURE = 1.8
 
 # Configure the client to use the Gemini API via an OpenAI-compatible endpoint
 external_client = AsyncOpenAI(
-    api_key=GEMINI_API_KEY,
+    api_key=gemini_api_key,
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
 )
-
-set_default_openai_client(external_client)
-set_tracing_disabled(True)
-set_default_openai_api("chat_completions")
+common_model_settings = ModelSettings(temperature=TEMPERATURE, tool_choice="auto")
+common_model = OpenAIChatCompletionsModel(
+    openai_client=external_client, model=MODEL_NAME
+)
 
 # Initialize Tavily client for web search
-tavily_client = AsyncTavilyClient(api_key=TAVILY_API_KEY)
+tavily_client = AsyncTavilyClient(api_key=tavily_api_key)
 
 
 # --- Tool Definitions ---
@@ -66,7 +65,9 @@ async def web_search(query: str) -> str:
         # Format results for better readability
         formatted_results = []
         for result in response.get('results', []):
-            result_text = f"### {result.get('title')}\n{result.get('content')}\n[Source]({result.get('url')})\n---\n"
+            result_text = f"""#{result.get('title')}
+            {result.get('content')}
+            [Source]({result.get('url')})\n\n"""
             formatted_results.append(result_text)
 
         if not formatted_results:
@@ -96,10 +97,6 @@ async def start():
 
     # --- Agent Definitions ---
     # These agents are created once per session for efficiency.
-    common_model_settings = ModelSettings(temperature=TEMPERATURE, tool_choice="auto")
-    common_model = OpenAIChatCompletionsModel(
-        openai_client=external_client, model=MODEL_NAME
-    )
 
     web_developer = Agent(
         name="Web_Developer",
