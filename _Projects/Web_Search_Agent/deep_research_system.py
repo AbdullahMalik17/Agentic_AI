@@ -11,7 +11,7 @@ from agents import(
     RunContextWrapper,
 )
 from dotenv import load_dotenv, find_dotenv 
-from typing import cast
+from research_agents import web_search , lead_agent 
 
 from dataclasses import dataclass 
 # Load environment variables
@@ -46,7 +46,7 @@ provider = AsyncOpenAI(
 # Step 2: Create a model
 model = OpenAIChatCompletionsModel(
     openai_client=provider,
-    model="gemini-2.5-flash"
+    model="gemini-2.5-pro"
 ) 
 # Step 3: Define config at run level
 
@@ -62,15 +62,16 @@ async def get_info(Wrapper: RunContextWrapper[Info]) -> str:
 
 def basic_dynamic(Wrapper: RunContextWrapper, agent: Agent) -> str:
     # print(f"\n[CALLING_BASIC_DYNAMIC]\nContext: {Wrapper}\nAgent: {agent}\n")
-    return f"You are {agent.name}.You should do deep to the User prompt and provide the latest knowledge by using web search tool . You give the user information about the user based on the context provided.Always respond in a helpful and friendly manner"
+    return f"""You are {agent.name}.You should do deep to the User prompt and provide the latest knowledge by using web search tool . You give the user information about the user based on the context provided."""
+
 # here I create Agent . 
 agent = Agent(
     name="DeepSearch Agent",
     instructions=basic_dynamic, 
     model=model,
     # instructions="You are DeepSearch Agent . You can answer questions, provide information and give Example(Code) if necessary . For latest information, you can search through websearch tool. Always respond in a helpful and friendly manner",
-    tools=[web_search, get_info],# <- removed trailing comma
-    model_settings=ModelSettings(temperature=1.9, max_tokens=2000, tool_choice="auto"),
+    handoffs=[lead_agent],  # <- removed trailing comma
+    model_settings=ModelSettings(temperature=1.9,tool_choice="required"),
     #   tool_use_behavior="stop_on_first_tool"
     )    
 @cl.on_chat_start

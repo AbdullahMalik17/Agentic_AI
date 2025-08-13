@@ -1,4 +1,4 @@
-from agents import Agent , Runner, AsyncOpenAI, OpenAIChatCompletionsModel, function_tool 
+from agents import Agent , Runner, AsyncOpenAI, OpenAIChatCompletionsModel, function_tool , RunContextWrapper
 from tavily import AsyncTavilyClient
 import os 
 from dotenv import load_dotenv, find_dotenv
@@ -58,6 +58,14 @@ async def web_search(query: str):
             # Handle errors gracefully
         return f"An error occurred during the web search: {str(e)}"
 
+# Here the Dynamic Instructions are as follows :
+def  dynamic_instructions(Wrapper:RunContextWrapper,agent:Agent) -> str:
+    return  """You are a {agent.name} agent. 
+    1. Your task is to lead the conversation and guide the user through the process of  Using the reflect tool to reflect on the user's input 
+    2. and provide a thoughtful response and Using the citation tool to provide citations for the information provided by the reflect tool.
+    3.For latest information , you should use the web search tool ."""
+       
+
 # Here it is a reflect agent 
 reflect_agent : Agent = Agent(
     name="Reflect Agent",
@@ -74,10 +82,7 @@ citation_agent = Agent(
 
 lead_agent : Agent = Agent(
     name="Lead Agent",
-    instructions="""You are a lead agent. 
-    1. Your task is to lead the conversation and guide the user through the process of  Using the reflect tool to reflect on the user's input 
-    2. and provide a thoughtful response and Using the citation tool to provide citations for the information provided by the reflect tool.
-    3.For latest information , you should use the web search tool .""",
+    instructions=dynamic_instructions,
     tools=[web_search, reflect_agent.as_tool(tool_name="Reflect_Tools",tool_description="You are to reflect on the user's input ."),citation_agent.as_tool(tool_name="Citation_Tools",tool_description="You are to provide citations for the information provided by the reflect tool.")],
     model=model,
 )
