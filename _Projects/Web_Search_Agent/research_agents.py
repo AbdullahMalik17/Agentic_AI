@@ -61,9 +61,10 @@ async def web_search(query: str):
 # Here the Dynamic Instructions are as follows :
 def  dynamic_instructions(Wrapper:RunContextWrapper,agent:Agent) -> str:
     return  """You are a {agent.name} agent. 
-    1. Your task is to lead the conversation and guide the user through the process of  Using the reflect tool to reflect on the user's input 
-    2. and provide a thoughtful response and Using the citation tool to provide citations for the information provided by the reflect tool.
-    3.For latest information , you should use the web search tool ."""
+    1. For latest information , you should use the web search tool .
+    2. Your task is to lead the conversation and guide the user through the process of  Using the reflect tool to reflect on the user's input 
+    3. and provide a thoughtful response and Using the citation tool to provide citations for the information provided by the reflect tool.
+"""
        
 
 # Here it is a reflect agent 
@@ -86,17 +87,20 @@ lead_agent : Agent = Agent(
     tools=[web_search, reflect_agent.as_tool(tool_name="Reflect_Tools",tool_description="You are to reflect on the user's input ."),citation_agent.as_tool(tool_name="Citation_Tools",tool_description="You are to provide citations for the information provided by the reflect tool.")],
     model=model,
 )
-result = Runner.run_sync(starting_agent=lead_agent,input="What is the effect of Climate Change on Agriculture in Pakistan?")
-print(result.final_output)
 
-# data_gathering_agent = Agent(
-#     name="Data Gathering Agent",
-#     instructions="You are a data gathering agent. Your task is to gather information from the user for clarity If needed . Use the Tavily API to perform web searches and return data Relevant questions / Question from user",
-#     model=model,
-    
-# )
+requirement_gathering_agent : Agent = Agent(
+    name="Requirement Gathering Agent",
+    instructions="You are a Requirement gathering agent. Your task is to gather information from the user for clarity If needed . Use the Tavily API to perform web searches and return data Relevant questions / Question from user",
+    model=model,
+    handoff_description="Once you have gathered the necessary information, hand off to the Planning Agent to plan the steps for operating the task according to the user requirement.",
+    tools=[web_search] 
+)   
+ 
 
-# planing_agent = data_gathering_agent.clone(
-#     name="Planning Agent",
-#     instructions="You are a planning agent. Your task is to plan the steps for operating the task according to the user requirement . Use  the data gathering agent to gather information from the user if needed , then you should reply the steps . " ,
-# )
+planing_agent : Agent = Agent(
+    name="Planning Agent",
+    instructions="You are a planning agent. Your task is to plan the steps for operating the task according to the user requirement . Plan the data according to the user requirement by using Data Gathering Agent , then you should reply the steps . ",
+    model=model,
+    handoff_description="Once you have planned the steps, hand off to the Lead Agent to execute the plan and provide the final output.",
+    tools=[web_search]
+)

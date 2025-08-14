@@ -11,7 +11,7 @@ from agents import(
     RunContextWrapper,
 )
 from dotenv import load_dotenv, find_dotenv 
-from research_agents import web_search , lead_agent 
+from research_agents import web_search , lead_agent , requirement_gathering_agent , planing_agent 
 
 from dataclasses import dataclass 
 # Load environment variables
@@ -62,7 +62,10 @@ async def get_info(Wrapper: RunContextWrapper[Info]) -> str:
 
 def basic_dynamic(Wrapper: RunContextWrapper, agent: Agent) -> str:
     # print(f"\n[CALLING_BASIC_DYNAMIC]\nContext: {Wrapper}\nAgent: {agent}\n")
-    return f"""You are {agent.name}.You should do deep to the User prompt and provide the latest knowledge by using web search tool . You give the user information about the user based on the context provided."""
+    return f"""You are {agent.name}.You should do deep to the User prompt 
+1. You should handoff requirement_gather_agent to gather the requirements from the user .
+2. Then , handoff to the planing_agent to plan the solution based on the requirements.
+3. Then , handoff to the lead_agent to lead the project and provide the final solution."""
 
 # here I create Agent . 
 agent = Agent(
@@ -70,7 +73,7 @@ agent = Agent(
     instructions=basic_dynamic, 
     model=model,
     # instructions="You are DeepSearch Agent . You can answer questions, provide information and give Example(Code) if necessary . For latest information, you can search through websearch tool. Always respond in a helpful and friendly manner",
-    handoffs=[lead_agent],  # <- removed trailing comma
+    handoffs=[requirement_gathering_agent,planing_agent,lead_agent],  # <- removed trailing comma
     model_settings=ModelSettings(temperature=1.9,tool_choice="required"),
     #   tool_use_behavior="stop_on_first_tool"
     )    
@@ -100,7 +103,7 @@ async def main(message: cl.Message):
         # Create a RunContextWrapper with the current history
         result = Runner.run_streamed(
             starting_agent=agent,
-            input=message.content,
+            input=history,
             context=user_Info1,
         )
 
