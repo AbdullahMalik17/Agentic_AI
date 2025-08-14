@@ -32,7 +32,7 @@ model = OpenAIChatCompletionsModel(
 ) 
 
 @function_tool 
-async def web_search(query: str):
+async def web_search(query: str): 
     """Search the web using Tavily."""
     try:
         # Await the Tavily search response
