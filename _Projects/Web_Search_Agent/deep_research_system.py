@@ -12,8 +12,7 @@ from agents import(
 )
 from dotenv import load_dotenv, find_dotenv 
 from research_agents import web_search , lead_agent , requirement_gathering_agent , planing_agent 
-
-from dataclasses import dataclass 
+from tools import get_info , Info 
 # Load environment variables
 load_dotenv(find_dotenv())
 # Force Agents SDK to use Chat Completions API to avoid Responses API event types
@@ -23,20 +22,10 @@ gemini_api_key = os.environ.get("GEMINI_API_KEY")
 if not gemini_api_key:
     raise ValueError("Gemini API key is not set . Please , ensure that it is defined in your env file.")
 
-
-
 # Here The api key of OpenAI 
 openai_api_key = os.getenv("OPENAI_API_KEY")
 if not openai_api_key:
     raise ValueError("OpenAI API key is not set. Please ensure OPENAI_API_KEY is defined in your .env file.")
-
-# It is used to show the display message in the chat 
-@dataclass
-class Info:
-    name : str
-    father_name : str
-    mother_name : str
-    sister_name : str
 
 # Step 1: Create a provider 
 provider = AsyncOpenAI(
@@ -50,29 +39,20 @@ model = OpenAIChatCompletionsModel(
 ) 
 # Step 3: Define config at run level
 
-@function_tool
-async def get_info(Wrapper: RunContextWrapper[Info]) -> str:
-    """Return the user's profile information from the run context."""
-    return (
-        f"The name of user is {Wrapper.context.name}, "
-        f"his father name is {Wrapper.context.father_name}, "
-        f"his mother name is {Wrapper.context.mother_name},"
-        f"and his sister name is {Wrapper.context.sister_name}."
-    )
-
 def basic_dynamic(Wrapper: RunContextWrapper, agent: Agent) -> str:
     # print(f"\n[CALLING_BASIC_DYNAMIC]\nContext: {Wrapper}\nAgent: {agent}\n")
-    return f"""You are {agent.name}.You should do deep to the User prompt 
-1. You should handoff requirement_gather_agent to gather the requirements from the user .
-2. Then , handoff to the planing_agent to plan the solution based on the requirements.
-3. Then , handoff to the lead_agent to lead the project and provide the final solution."""
+    return f"""You are {agent.name}.You should do deep to the User prompt . Understand the prompt and 
+provide the best solution to the user by applying the following  cycle if prompt is quiries .  
+- You should handoff requirement_gather_agent to gather the requirements from the user .
+- Then , handoff to the planing_agent to plan the solution based on the requirements.
+- Then , handoff to the lead_agent to lead the project and provide the final solution."""
 
 # here I create Agent . 
 agent = Agent(
     name="DeepSearch Agent",
     instructions=basic_dynamic, 
     model=model,
-    # instructions="You are DeepSearch Agent . You can answer questions, provide information and give Example(Code) if necessary . For latest information, you can search through websearch tool. Always respond in a helpful and friendly manner",
+    tools=[get_info],
     handoffs=[requirement_gathering_agent,planing_agent,lead_agent],  # <- removed trailing comma
     model_settings=ModelSettings(temperature=1.9,tool_choice="required"),
     #   tool_use_behavior="stop_on_first_tool"
@@ -96,7 +76,7 @@ async def main(message: cl.Message):
     await msg.send()  
     
     try:
-        # print("\n[CALLING_AGENT_WITH_CONTEXT]\n", history, "\n")
+
         #give the data of the user to the agent 
         user_Info1 = Info(name="Abdullah", father_name="Athar", mother_name="Bushra",sister_name="Amna")
         # Run the agent with streaming enabled
@@ -124,9 +104,6 @@ async def main(message: cl.Message):
         history.append({"role": "assistant", "content": msg.content})
         cl.user_session.set("history", history)
 
-        # Optional: Log the interaction
-        print(f"User: {message.content}")
-        print(f"Assistant: {msg.content}")
   
     except Exception as e:
         await cl.Message(content=str(e)).send()

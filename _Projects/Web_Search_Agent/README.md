@@ -1,41 +1,105 @@
-## Web Search Agent
+# Web Search Agent 🔍
 
-A production-ready Chainlit agent demonstrating tool use and streaming with the OpenAI Agents SDK.
+A sophisticated AI-powered web search and resea## 🛠️ Technical Details
 
-### What it does
-- Uses Tavily to fetch fresh, real-time web results
-- Exposes a custom `get_info` tool that reads a typed user profile from local run context
-- Streams model output token-by-token for responsive UX
+### System Architecture
+- Tools are implemented using the `@function_tool` decorator
+- Multi-agent system with specialized roles:
+  ```python
+  agents=[requirement_gathering_agent, planning_agent, lead_agent, web_search]
+  ```
+- Context management via dataclass: `Runner.run_streamed(..., context=Info(...))`
+- Real-time response streaming with event-based architecture
 
-### Tech stack
-- Chainlit UI
-- OpenAI Agents SDK (function tools, runners, model settings)
-- Gemini via OpenAI-compatible endpoint (`gemini-2.5-flash`)
-- Tavily Search API
+### 🎯 Usage Examples
 
-### Requirements
-- Python 3.13+
-- uv
-- Environment variables in `.env`:
+1. Research Queries:
+   - "Analyze the latest developments in quantum computing"
+   - "Summarize recent AI regulations in the EU"
+   - "Compare different approaches to sustainable energy"
+
+2. Profile Information:
+   - "What's my profile information?"
+   - "Show my personal details"
+
+## ⚙️ Configuration
+
+### Model Settings
+```python
+model = OpenAIChatCompletionsModel(
+    openai_client=provider,
+    model="gemini-2.5-flash"
+)
 ```
+
+### Agent Settings
+- Temperature: 1.9 (Adjustable for creativity vs precision)
+- Tool Choice: "required" (Ensures appropriate tool usage) combines multiple specialized agents to provide comprehensive information gathering and analysis. Built with Python and modern AI technologies, this system offers an interactive chat interface for intuitive research operations.
+
+## 🌟 Features
+
+- **Multi-Agent System Architecture**
+  - Requirement Gathering Agent for understanding user needs
+  - Planning Agent for strategic research planning
+  - Lead Agent for project coordination
+  - Web Search Agent for real-time information retrieval
+
+- **Advanced Web Search Integration**
+  - Powered by Tavily API for accurate and fresh web results
+  - Structured response formatting with source attribution
+  - Real-time data fetching and processing
+
+- **Interactive Chat Interface**
+  - Built with Chainlit for smooth user interaction
+  - Real-time streaming responses
+  - Chat history management
+
+## 🔧 Requirements
+
+- Python 3.13 or higher
+- Environment variables in `.env`:
+```env
 GEMINI_API_KEY=your_gemini_key_here
 TAVILY_API_KEY=your_tavily_key_here
 ```
 
-### Install & Run
-```
-cd _Projects/Web_Search_Agent
-uv run chainlit run main_chainlit.py --watch
-```
-Open the URL printed by Chainlit in your terminal.
+## 🚀 Installation & Setup
 
-### Project structure
+1. Clone the repository and navigate to the project directory:
+```bash
+git clone [your-repo-url]
+cd web-search-agent
 ```
-_Projects/Web_Search_Agent/
-├─ main.py           # Agent, tools, streaming
-├─ pyproject.toml    # Dependencies (chainlit, openai-agents, tavily-python, dotenv)
-├─ chainlit.md       # Welcome screen
-└─ README.md         # This file
+
+2. Create and activate a virtual environment:
+```bash
+python -m venv venv
+# On Windows
+.\venv\Scripts\activate
+# On Unix or MacOS
+source venv/bin/activate
+```
+
+3. Install dependencies using uv:
+```bash
+uv install
+```
+
+4. Start the application:
+```bash
+chainlit run main.py
+```
+
+## 📁 Project Structure
+```
+Web_Search_Agent/
+├── main.py                 # Entry point and core application
+├── deep_research_system.py # Agent system implementation
+├── research_agents.py      # Agent definitions and configurations
+├── tools.py               # Utility functions and tools
+├── pyproject.toml         # Project dependencies and settings
+├── chainlit.md           # Welcome screen configuration
+└── README.md             # Documentation
 ```
 
 ### How it works
@@ -54,19 +118,44 @@ _Projects/Web_Search_Agent/
 - Tool choice: `ModelSettings(tool_choice="auto")` lets the model decide when to use tools.
 - Temperature: increase for creativity, decrease for factual responses.
 
-### Security & privacy
-- API keys are read from `.env`; never hardcode credentials.
-- `get_info` uses local run context; that data is not sent to the LLM unless surfaced in tool output.
-- Avoid putting PII in prompts; keep sensitive data in local context when possible.
+## 🔒 Security Best Practices
 
-### Troubleshooting
-- Cannot instantiate typing.Union: Ensure tool signatures use `RunContextWrapper[T]` and read via `Wrapper.context`. Avoid `from multiprocessing import context`.
-- Tools not called: Confirm `Agent(..., tools=[web_search, get_info])` is a list (no trailing comma creating a tuple). Restart Chainlit after changes.
-- Tavily errors: Set `TAVILY_API_KEY` and ensure network access.
-- Gemini errors: Verify `GEMINI_API_KEY` and model name.
+1. **API Key Management**
+   - All API keys stored in `.env`
+   - Environment variable validation
+   - No hardcoded credentials
 
-### License
-MIT — use and modify as needed.
+2. **Data Privacy**
+   - Local context management for sensitive data
+   - Minimal PII exposure in prompts
+   - Secure data handling in tools
 
-### Author
-Abdullah Malik — `@AbdullahMalik17`
+## ❗ Troubleshooting
+
+### Common Issues and Solutions
+1. **API Connection Issues**
+   - Verify API keys in `.env`
+   - Check network connectivity
+   - Validate API endpoint status
+
+2. **Agent Behavior Issues**
+   - Confirm correct tool registration
+   - Check agent configuration
+   - Verify model settings
+
+3. **Performance Optimization**
+   - Adjust model temperature
+   - Fine-tune tool usage settings
+   - Optimize search parameters
+
+## 📄 License
+
+MIT License - Feel free to use and modify as needed.
+
+## 👨‍💻 Author
+
+Abdullah Malik (`@AbdullahMalik17`)
+
+---
+
+For bug reports, feature requests, or contributions, please create an issue in the repository.
