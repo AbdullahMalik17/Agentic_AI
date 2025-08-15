@@ -6,13 +6,13 @@ from agents import(
     Runner,
     AsyncOpenAI ,
     OpenAIChatCompletionsModel ,
-    function_tool ,
     ModelSettings ,
+    RunConfig,
     RunContextWrapper,
 )
 from dotenv import load_dotenv, find_dotenv 
-from research_agents import web_search , lead_agent , requirement_gathering_agent , planing_agent 
-from tools import get_info , Info 
+from research_agents import  lead_agent , requirement_gathering_agent , planning_agent 
+from tools import Info 
 # Load environment variables
 load_dotenv(find_dotenv())
 # Force Agents SDK to use Chat Completions API to avoid Responses API event types
@@ -35,28 +35,28 @@ provider = AsyncOpenAI(
 # Step 2: Create a model
 model = OpenAIChatCompletionsModel(
     openai_client=provider,
-    model="gemini-2.5-pro"
+    model="gemini-2.5-flash"
 ) 
 # Step 3: Define config at run level
 
-def basic_dynamic(Wrapper: RunContextWrapper, agent: Agent) -> str:
-    # print(f"\n[CALLING_BASIC_DYNAMIC]\nContext: {Wrapper}\nAgent: {agent}\n")
-    return f"""You are {agent.name}.You should do deep to the User prompt . Understand the prompt and 
-provide the best solution to the user by applying the following  cycle if prompt is quiries .  
-- You should handoff requirement_gather_agent to gather the requirements from the user .
-- Then , handoff to the planing_agent to plan the solution based on the requirements.
-- Then , handoff to the lead_agent to lead the project and provide the final solution."""
+def deep_research_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
+    return f"""You are {agent.name}, an advanced AI research coordinator.
+Your task is to receive the user's research query and  hand it off to the 'Requirement Gathering Agent' to begin the research process. If the Query is simple , you can directly hand it off to the 'Lead Agent' for immediate action.
+Do not analyze the query, answer the user, or perform any other actions. Your sole function is to initiate the multi-agent workflow."""
 
-# here I create Agent . 
-agent = Agent(
+# Create the main DeepSearch Agent with improved configuration
+agent : Agent = Agent(
     name="DeepSearch Agent",
-    instructions=basic_dynamic, 
-    model=model,
-    tools=[get_info],
-    handoffs=[requirement_gathering_agent,planing_agent,lead_agent],  # <- removed trailing comma
-    model_settings=ModelSettings(temperature=1.9,tool_choice="required"),
-    #   tool_use_behavior="stop_on_first_tool"
-    )    
+    instructions=deep_research_instructions,
+    model=model,  
+    # The coordinator's only job is to kick off the workflow by handing off to the first agent.
+    # The subsequent handoffs are defined within each agent, creating a chain.
+    handoffs=[requirement_gathering_agent],
+    model_settings=ModelSettings(
+        temperature=0.7,  # Lower temperature for more focused coordination
+        tool_choice="auto",
+        )
+)
 @cl.on_chat_start
 async def handle_message():
     cl.user_session.set("history",[])  # Store the history in the user session
@@ -79,33 +79,36 @@ async def main(message: cl.Message):
 
         #give the data of the user to the agent 
         user_Info1 = Info(name="Abdullah", father_name="Athar", mother_name="Bushra",sister_name="Amna")
+        # Create a RunConfig to pass the session name for tracing
+        run_config = RunConfig(workflow_name="Deep Research Session")
+
         # Run the agent with streaming enabled
         # Create a RunContextWrapper with the current history
-        result = Runner.run_streamed(
+        result = Runner.run_sync(
             starting_agent=agent,
-            input=history,
+            input=history,  # Use the current message instead of full history
             context=user_Info1,
+            run_config=run_config  # Pass the config object
         )
-
-        # Stream the response token by token and surface tool outputs
-        async for event in result.stream_events():
-            if event.type == "raw_response_event" and hasattr(event.data, 'delta'):
-                token = event.data.delta
-                await msg.stream_token(token)
-            elif event.type == "run_item_stream_event":
-                item = getattr(event, "item", None)
-                if item and getattr(item, "type", "") == "tool_call_output_item":
-                    output_text = str(getattr(item, "output", ""))
-                    if output_text:
-                        await msg.stream_token(output_text)
+        await cl.Message(content=result.final_output).send()  # Send the final output as a message
+        # # Stream the response token by token and surface tool outputs
+        # async for event in result.stream_events():
+        #     if event.type == "raw_response_event" and hasattr(event.data, 'delta'):
+        #         token = event.data.delta
+        #         await msg.stream_token(token)
+        #     elif event.type == "run_item_stream_event":
+        #         item = getattr(event, "item", None)
+        #         if item and getattr(item, "type", "") == "tool_call_output_item":
+        #             output_text = str(getattr(item, "output", ""))
+        #             if output_text:
+        #                 await msg.stream_token(output_text)
 
         # Finalize the streamed message and persist history
-        await msg.update()
+        # await msg.update()
         history.append({"role": "assistant", "content": msg.content})
         cl.user_session.set("history", history)
 
   
     except Exception as e:
-        await cl.Message(content=str(e)).send()
+        await cl.Message(content=f"Error:{str(e)}").send()
         print(f"Error:{str(e)}")
-

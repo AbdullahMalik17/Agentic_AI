@@ -1,7 +1,8 @@
-from agents import Agent , Runner, AsyncOpenAI, OpenAIChatCompletionsModel, function_tool , RunContextWrapper
+from agents import Agent , AsyncOpenAI, OpenAIChatCompletionsModel, function_tool , RunContextWrapper , ModelSettings
 from tavily import AsyncTavilyClient
 import os 
 from dotenv import load_dotenv, find_dotenv
+from tools import get_info
 
 _:bool = load_dotenv(find_dotenv())
 #here the API keys 
@@ -50,57 +51,92 @@ async def web_search(query: str):
 """
             formatted_results.append(result_text)
 
-            # Join all results into a single string
+        # Join all results into a single string
         all_results = "\n".join(formatted_results)
         return all_results
 
     except Exception as e:
-            # Handle errors gracefully
+        # Handle errors gracefully
         return f"An error occurred during the web search: {str(e)}"
 
 # Here the Dynamic Instructions are as follows :
-def  dynamic_instructions(Wrapper:RunContextWrapper,agent:Agent) -> str:
-    return  """You are a {agent.name} agent. 
-    1. For latest information , you should use the web search tool .
-    2. Your task is to lead the conversation and guide the user through the process of  Using the reflect tool to reflect on the user's input 
-    3. and provide a thoughtful response and Using the citation tool to provide citations for the information provided by the reflect tool.
-"""
-       
+def dynamic_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
+    return f"""You are the {agent.name}, an expert researcher responsible for executing a research plan.
+    
+You have been given a detailed plan from the Planning Agent. Your tasks are:
+1. Execute the research plan step-by-step, using the 'web_search' tool with the specified queries.
+2. Gather all necessary information from the web.
+3. Analyze and synthesize the collected information thoroughly.
+4. Structure your final response with clear sections as requested, such as:
+   - Summary of findings
+   - Detailed analysis
+   - Supporting evidence
+   - Recommendations (if applicable)
+5. ALWAYS cite your sources properly using markdown links.
 
-# Here it is a reflect agent 
-reflect_agent : Agent = Agent(
-    name="Reflect Agent",
-    instructions="You are a reflect agent. Your task is to reflect on the user's input and provide a thoughtful response. ",
-    model=model, 
-)
+You are the final agent in the chain. Your response will be sent directly to the user. Ensure it is comprehensive, accurate, and well-structured."""
 
-# Here it is a citation agent 
-citation_agent = Agent(
-    name="Citation Agent",
-    instructions="You are a citation agent. Your task is to provide citations for the information provided by the reflect agent.",
-    model=model,
-)
+def gather_requirements_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
+    return f"""You are the {agent.name}, responsible for understanding and clarifying the user's research requirements.
 
-lead_agent : Agent = Agent(
+Your tasks are:
+1. Interact with the user if their request is unclear to gather all necessary details.
+2. Identify the key objectives, areas to explore, and any constraints.
+3. Synthesize this into a clear set of requirements.
+4. Minimise the Questioning to ensure the user feels understood and engaged.
+
+IMPORTANT: Once the requirements are clear, you MUST hand off to the 'Planning Agent'. Do not attempt to answer the user's query or perform any research yourself. Your only goal is to define the research scope for the next agent."""
+
+def planning_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
+    return f"""You are the {agent.name}, a strategic research planner. Your SOLE responsibility is to create a detailed research plan based on the provided requirements.
+
+Your tasks are:
+1. Review the requirements gathered by the previous agent.
+2. Break down the research into specific, actionable subtasks.
+3. For each subtask, identify the key search queries that the Lead Agent should use.
+4. Structure your output as a clear, step-by-step research plan.
+
+Your plan should include:
+1. Research Objectives
+2. Key Search Areas
+3. Methodology
+4. Expected Deliverables
+
+IMPORTANT: After creating the plan, you MUST hand off to the 'Lead Agent' for execution. Do NOT perform the research yourself or provide a final answer to the user. Your only deliverable is the plan itself, which will be passed to the next agent."""
+
+# To create a robust handoff chain and avoid NameErrors, we define the agents
+# in reverse order of their execution.
+lead_agent: Agent = Agent(
     name="Lead Agent",
     instructions=dynamic_instructions,
-    tools=[web_search, reflect_agent.as_tool(tool_name="Reflect_Tools",tool_description="You are to reflect on the user's input ."),citation_agent.as_tool(tool_name="Citation_Tools",tool_description="You are to provide citations for the information provided by the reflect tool.")],
+    tools=[web_search, get_info],  # Added get_info tool to the final agent
     model=model,
+    model_settings=ModelSettings(
+        temperature=1.9,  #  higher for creative synthesis
+        tool_choice="auto"
+    )
 )
 
-requirement_gathering_agent : Agent = Agent(
-    name="Requirement Gathering Agent",
-    instructions="You are a Requirement gathering agent. Your task is to gather information from the user for clarity If needed . Use the Tavily API to perform web searches and return data Relevant questions / Question from user",
-    model=model,
-    handoff_description="Once you have gathered the necessary information, hand off to the Planning Agent to plan the steps for operating the task according to the user requirement.",
-    tools=[web_search] 
-)   
- 
-
-planing_agent : Agent = Agent(
+planning_agent: Agent = Agent(
     name="Planning Agent",
-    instructions="You are a planning agent. Your task is to plan the steps for operating the task according to the user requirement . Plan the data according to the user requirement by using Data Gathering Agent , then you should reply the steps . ",
+    instructions=planning_instructions,
     model=model,
-    handoff_description="Once you have planned the steps, hand off to the Lead Agent to execute the plan and provide the final output.",
-    tools=[web_search]
+    tools=[web_search],  # For plan validation and initial research
+    handoffs=[lead_agent],  # Chained handoff
+    model_settings=ModelSettings(
+        temperature=0.8,
+        tool_choice="auto"
+    )
+)
+
+requirement_gathering_agent: Agent = Agent(
+    name="Requirement Gathering Agent",
+    instructions=gather_requirements_instructions,
+    model=model,
+    tools=[web_search],  # Allow web search for requirement validation
+    handoffs=[planning_agent],  # Chained handoff
+    model_settings=ModelSettings(
+        temperature=0.7,  # Lower temperature for more focused responses
+        tool_choice="auto"
+    )
 )
