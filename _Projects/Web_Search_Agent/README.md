@@ -1,4 +1,4 @@
-#Deep Research Agent 🔍
+# Deep Research Agent 🔍
 
 A sophisticated AI-powered deep research Agent  and reseach ## 🛠️ Technical Details
 
