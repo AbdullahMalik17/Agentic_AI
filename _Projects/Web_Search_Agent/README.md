@@ -11,6 +11,9 @@ A sophisticated AI-powered web search and resea## 🛠️ Technical Details
 - Context management via dataclass: `Runner.run_streamed(..., context=Info(...))`
 - Real-time response streaming with event-based architecture
 
+# Demo Picture
+[Picture of workflow of Deep Research Agent](Workflow_of_Agent.png)
+
 ### 🎯 Usage Examples
 
 1. Research Queries:
