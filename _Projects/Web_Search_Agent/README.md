@@ -1,6 +1,6 @@
-# Web Search Agent 🔍
+#Deep Research Agent 🔍
 
-A sophisticated AI-powered web search and resea## 🛠️ Technical Details
+A sophisticated AI-powered deep research Agent  and reseach ## 🛠️ Technical Details
 
 ### System Architecture
 - Tools are implemented using the `@function_tool` decorator
@@ -37,7 +37,7 @@ model = OpenAIChatCompletionsModel(
 
 ### Agent Settings
 - Temperature: 1.9 (Adjustable for creativity vs precision)
-- Tool Choice: "required" (Ensures appropriate tool usage) combines multiple specialized agents to provide comprehensive information gathering and analysis. Built with Python and modern AI technologies, this system offers an interactive chat interface for intuitive research operations.
+- Tool Choice: "Auto" Agent decides the usage of tools .
 
 ## 🌟 Features
 
@@ -54,7 +54,6 @@ model = OpenAIChatCompletionsModel(
 
 - **Interactive Chat Interface**
   - Built with Chainlit for smooth user interaction
-  - Real-time streaming responses
   - Chat history management
 
 ## 🔧 Requirements
@@ -90,7 +89,7 @@ uv install
 
 4. Start the application:
 ```bash
-chainlit run main.py
+uv run chainlit run deep_research_system.py
 ```
 
 ## 📁 Project Structure
