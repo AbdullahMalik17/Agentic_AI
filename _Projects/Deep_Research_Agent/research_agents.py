@@ -104,6 +104,24 @@ Your plan should include:
 
 IMPORTANT: After creating the plan, you MUST hand off to the 'Lead Agent' for execution. Do NOT perform the research yourself or provide a final answer to the user. Your only deliverable is the plan itself, which will be passed to the next agent."""
 
+def citation_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
+    return f"""You are the {agent.name}, responsible for ensuring all information provided by the Lead Agent is properly cited with markdown links. """
+def reflect_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
+    return f"""You are the {agent.name}, responsible for reflecting on the information provided by the Lead Agent and ensuring it is comprehensive and accurate."""
+
+citation_agent : Agent = Agent(
+    name="Citation Agent",
+    instructions=citation_instructions,
+    model=model,
+    tools=[get_info,web_search],
+    )
+ 
+reflect_agent: Agent = Agent(
+    name = "Refelct Agent",
+    instructions = "You are the Reflect Agent. Your task is to reflect on the information provided by the Lead Agent and ensure it is comprehensive and accurate.",
+    model = model,
+    tools = [get_info, web_search],  # Using get_info tool for citation and validation
+) 
 # To create a robust handoff chain and avoid NameErrors, we define the agents
 # in reverse order of their execution.
 lead_agent: Agent = Agent(
