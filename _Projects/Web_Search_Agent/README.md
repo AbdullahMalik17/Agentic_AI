@@ -12,7 +12,7 @@ A sophisticated AI-powered web search and resea## 🛠️ Technical Details
 - Real-time response streaming with event-based architecture
 
 # Demo Picture
-[Picture of workflow of Deep Research Agent](Workflow_of_Agent.png)
+![Picture of workflow of Deep Research Agent](Workflow_of_Agent.png)
 
 ### 🎯 Usage Examples
 
