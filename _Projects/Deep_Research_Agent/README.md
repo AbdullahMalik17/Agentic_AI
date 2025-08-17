@@ -10,6 +10,8 @@ A sophisticated AI-powered deep research Agent  and reseach ## 🛠️ Technical
   ```
 - Context management via dataclass: `Runner.run_streamed(..., context=Info(...))`
 - Real-time response streaming with event-based architecture
+# Demo video 
+![Video of Deep Research Agent](Demo_Video.mp4) 
 
 # Demo Picture
 ![Picture of workflow of Deep Research Agent](Workflow_of_Agent.png)
