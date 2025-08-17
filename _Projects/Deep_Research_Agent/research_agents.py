@@ -63,7 +63,7 @@ async def web_search(query: str):
 def dynamic_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
     return f"""You are the {agent.name}, an expert researcher responsible for executing a research plan.
     
-You have been given a detailed plan from the Planning Agent. Your tasks are:
+You have been given a detailed plan from the Planning Agent . You should follow the plan of planning agent. Your tasks are:
 1. Execute the research plan step-by-step, using the 'web_search' tool with the specified queries.
 2. Gather all necessary information from the web.
 3. Analyze and synthesize the collected information thoroughly.
