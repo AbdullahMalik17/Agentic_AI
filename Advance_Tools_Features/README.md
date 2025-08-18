@@ -11,20 +11,9 @@ Tool use behavior defines how an agent handles tool execution during its decisio
 ### 1. Agent Configuration
 
 ```python
-base_agent = Agent(
-    name="WeatherAgent",
-    instructions="You are a helpful assistant.",
-    model=llm_model,
-    tools=[get_weather, get_travel_plan],
     tool_use_behavior=StopAtTools(stop_at_tool_names=["get_travel_plan"])
-)
 ```
 
-### 2. Tool Definitions
-
-Tools are defined using the `@function_tool` decorator:
-- `get_weather`: Retrieves weather information for a given city
-- `get_travel_plan`: Creates travel plans for a specified city
 
 ### 3. Tool Use Behavior Control
 
