@@ -187,7 +187,7 @@ async def main(message: cl.Message):
         info = Info("Abdullah","I am a software engineer with expertise in AI and web development.")
             
         # Run the agent with the latest message and context
-        result = Runner.run_streamed(starting_agent=triage_agent,input=history,context=info)
+        result = Runner.run_streamed(starting_agent=triage_agent,input=history,context=info,max_turns=30)
         # Stream the response token by token and surface tool outputs
         async for event in result.stream_events():
             if event.type == "raw_response_event" and hasattr(event.data, 'delta'):
