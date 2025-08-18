@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv, find_dotenv
-from agents import Agent, Runner, AsyncOpenAI, OpenAIChatCompletionsModel, function_tool
+from agents import Agent, Runner, AsyncOpenAI, OpenAIChatCompletionsModel, function_tool, StopAtTools
 
 _: bool = load_dotenv(find_dotenv())
 
@@ -24,22 +24,27 @@ llm_model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
 @function_tool
 def get_weather(city: str) -> str:
     """A simple function to get the weather for a user."""
-    return f"The weather for {city} is sunny."
+    return f"Sunny"
+
+@function_tool
+def get_travel_plan(city: str) -> str:
+    """Plan Travel for your city"""
+    return f"Travel Plan is not available"
 
 
 base_agent: Agent = Agent(
     name="WeatherAgent",
     instructions="You are a helpful assistant.",
     model=llm_model,
-    tools=[get_weather]
+    tools=[get_weather, get_travel_plan],
+    tool_use_behavior=StopAtTools(stop_at_tool_names=["get_travel_plan"])
 )
 
-new_agent: Agent = Agent(
-    name="WeatherAgent",
-    instructions="You are a helpful assistant.",
-    model=llm_model,
-    tools=[get_weather]
-)
+# res = Runner.run_sync(base_agent, "What is weather in Lahore")
+res = Runner.run_sync(base_agent, "Make me travel plan for Lahore")
+print(res.final_output)
 
-res = Runner.run_sync(base_agent, "What's the weather in Karachi?")
-print(res)
+# 1. NLP answer = loop finished
+# 2. tool call = loop continue - loop finish
+
+# tool call = ASK Question from Human = loop pause
