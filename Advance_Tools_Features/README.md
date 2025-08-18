@@ -60,3 +60,6 @@ The implementation supports different LLM services and models:
 - Clear separation of concerns between tools and behavior
 
 This implementation demonstrates advanced control over agent behavior, making it suitable for applications requiring careful tool execution management and human oversight.
+
+# Context is King – Making Tools Appear & Disappear
+A good manager doesn't give every tool to every team member. The is_enabled flag on a @function_tool lets you make tools available only when conditions are right.
