@@ -1,4 +1,3 @@
-
 import os
 import chainlit as cl 
 from agents import(
@@ -88,7 +87,8 @@ async def main(message: cl.Message):
             starting_agent=agent,
             input=history,  # Use the current message instead of full history
             context=user_Info1,
-            run_config=run_config  # Pass the config object
+            run_config=run_config,
+            max_turns=50# Pass the config object
         )
         await cl.Message(content=result.final_output).send()  # Send the final output as a message
         # # Stream the response token by token and surface tool outputs
