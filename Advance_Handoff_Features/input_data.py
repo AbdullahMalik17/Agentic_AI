@@ -24,12 +24,9 @@ llm_model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
 )
 @dataclass 
 class Data :
-    name: str
-    age: int
-    city: str
-def dynamic_initiate(ctx:RunContextWrapper[Data] , ):
-    return "The name of the person is " + ctx.context.name + " and the age is " + str(ctx.context.age) + " and the city is " + ctx.context.city
-
+    topic : str
+def dynamic_initiate(ctx:RunContextWrapper,input_data: Data):
+    print("Tool is called with with input data:", input_data)
 @function_tool
 def get_weather(city: str) -> str:
     """A simple function to get the weather for a user."""
@@ -42,17 +39,19 @@ news_agent : Agent = Agent(
     tools = [get_weather],
     handoff_description = "News Expert Agent"
 ) 
+handoff_news_agent = handoff(
+    agent=news_agent,
+    tool_name_override="get_News_Agent",
+    tool_description_override="Get the latest news from the News Agent. This agent specializes in news and current events.",
+    on_handoff=dynamic_initiate,  
+    input_type=Data,
+) 
 agent  : Agent = Agent(
     name = "Assistant Agent",
     instructions="You are a helpful assistant. If the prompt is related to news, hand it off to the News Agent. Otherwise, answer the question directly.",
     model = llm_model,
-    handoffs = [handoff(news_agent,
-                        tool_name_override="get_news",
-                        tool_description="Get the latest news about a topic",
-                        on_handoff=dynamic_initiate,
-                        input_type=Data)]
+    handoffs = [handoff_news_agent]
 )
-
-res = Runner.run_sync(agent,"What's the latest news about ChatGpt 5 ?")
+res = Runner.run_sync(agent,"What's the latest news about ChatGpt 5? Handoff to the news agent, My name is Abdullah, My age is 17 and I live in Karachi ")
 print(res.final_output)
 print(res.last_agent.name)
