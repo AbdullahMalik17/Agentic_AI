@@ -138,7 +138,6 @@ agentic_ai_developer = Agent(
     tools=[devops_tool, openai_tool, web_search],
     model_settings=common_model_settings,
 )
-
 # Triage Agent: The entry point for all user queries
 triage_agent = Agent(
     name="Bushra",
