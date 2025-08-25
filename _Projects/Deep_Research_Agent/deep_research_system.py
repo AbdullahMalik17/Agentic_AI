@@ -11,7 +11,7 @@ from agents import(
 )
 from dotenv import load_dotenv, find_dotenv 
 from research_agents import  lead_agent , requirement_gathering_agent , planning_agent 
-from tools import Info 
+from tools import Info , get_info
 # Load environment variables
 load_dotenv(find_dotenv())
 # Force Agents SDK to use Chat Completions API to avoid Responses API event types
@@ -47,13 +47,12 @@ Do not analyze the query, answer the user, or perform any other actions. Your so
 agent : Agent = Agent(
     name="DeepSearch Agent",
     instructions=deep_research_instructions,
-    model=model,  
+    model=model,
     # The coordinator's only job is to kick off the workflow by handing off to the first agent.
     # The subsequent handoffs are defined within each agent, creating a chain.
     handoffs=[requirement_gathering_agent],
     model_settings=ModelSettings(
         temperature=0.7,  # Lower temperature for more focused coordination
-        tool_choice="auto",
         )
 )
 @cl.on_chat_start

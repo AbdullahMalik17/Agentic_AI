@@ -113,14 +113,14 @@ citation_agent : Agent = Agent(
     name="Citation Agent",
     instructions=citation_instructions,
     model=model,
-    tools=[get_info,web_search],
+    tools=[web_search],
     )
  
 reflect_agent: Agent = Agent(
     name = "Refelct Agent",
     instructions = "You are the Reflect Agent. Your task is to reflect on the information provided by the Lead Agent and ensure it is comprehensive and accurate.",
     model = model,
-    tools = [get_info, web_search],  # Using get_info tool for citation and validation
+    tools = [web_search],  # Using get_info tool for citation and validation
 ) 
 # To create a robust handoff chain and avoid NameErrors, we define the agents
 # in reverse order of their execution.
@@ -151,7 +151,7 @@ requirement_gathering_agent: Agent = Agent(
     name="Requirement Gathering Agent",
     instructions=gather_requirements_instructions,
     model=model,
-    tools=[web_search],  # Allow web search for requirement validation
+    tools=[web_search,get_info],  # Allow web search for requirement validation
     handoffs=[planning_agent],  # Chained handoff
     model_settings=ModelSettings(
         temperature=0.7,  # Lower temperature for more focused responses
