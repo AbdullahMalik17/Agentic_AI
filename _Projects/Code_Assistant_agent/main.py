@@ -3,8 +3,7 @@ import chainlit as cl
 from chainlit import on_message, on_chat_start
 from agent_definations import triage_agent , Info 
 
-from agents import Runner
-from agents import MaxTurnsExceeded
+from agents import Runner , MaxTurnsExceeded , RunConfig
 @on_chat_start
 async def start():  
     """
@@ -17,7 +16,7 @@ async def start():
     cl.user_session.set("triage_agent", triage_agent)
 
     await cl.Message(
-        content="Welcome to the Coder AI Assistant! How can I help you today?"
+        content="Welcome to the  Bushra Code AI Assistant! How can I help you today?"
     ).send()
 
 
@@ -35,10 +34,17 @@ async def main(message: cl.Message):
     history.append({"role": "user", "content": message.content})
 
     try:
+        run_config = RunConfig(
+            workflow_name="Code_Assistant_Workflow",
+        )
         info = Info("Abdullah","I am a software engineer with expertise in AI and web development.")
         try:    
         # Run the agent with the latest message and context
-            result = Runner.run_streamed(starting_agent=triage_agent,input=history,context=info,max_turns=30)
+            result = Runner.run_streamed(starting_agent=triage_agent,
+                                         input=history,
+                                         run_config=run_config,
+                                         context=info,
+                                         max_turns=30)
         # Stream the response token by token and surface tool outputs
         except MaxTurnsExceeded as e:
             await cl.Message(content=f"Max turns exceeded: {e}").send()

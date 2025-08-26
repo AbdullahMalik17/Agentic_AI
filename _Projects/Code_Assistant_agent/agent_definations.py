@@ -140,7 +140,7 @@ agentic_ai_developer = Agent(
 )
 # Triage Agent: The entry point for all user queries
 triage_agent = Agent(
-    name="Bushra",
+    name="Bushra Code Assistant",
     instructions=panacloud_prompt,
     model=common_model,
     handoffs=[web_developer, mobile_developer, agentic_ai_developer],
