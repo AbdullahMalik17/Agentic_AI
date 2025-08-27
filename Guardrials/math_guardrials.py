@@ -29,7 +29,7 @@ run_config = RunConfig(
 )   
 agent_quardrial = Agent(
     name = "Homework Quardrial Police",
-    instructions = "If the user is asking for help with math homework, you send is_homework as true, otherwise false. You always answer in the format {is_homework:bool,reasoning:str} and you never say anything else.",
+    instructions = "If the user is asking for help with math homework by using math homework related words, you send is_homework as true, otherwise false. You always answer in the format {is_homework:bool,reasoning:str} and you never say anything else.",
     model = model,
     output_type = Math_Output
 )
@@ -47,10 +47,12 @@ agent : Agent = Agent(
     model = model,
     input_guardrails=[math_quardrials],
 )
-
 async def main():
-    result = await Runner.run(starting_agent=agent ,input = "Hi",run_config=run_config)
-    print(result.final_output)
-
+    try:
+        result = await Runner.run(starting_agent=agent ,input = "What is the derivative of 2x+8y",run_config=run_config)
+        print(result.final_output)
+        
+    except InputGuardrailTripwireTriggered as e:
+        print(f"You should use this chatbot for non-homework related questions. {e}")
 if __name__ == "__main__":
     asyncio.run(main())

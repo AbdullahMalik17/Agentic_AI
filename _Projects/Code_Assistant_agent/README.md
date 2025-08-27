@@ -3,8 +3,10 @@
 ## Project Overview
 A sophisticated AI-powered development platform that utilizes three specialized agents to provide expert guidance and assistance in software development. Each agent is designed to handle specific domains of expertise while working together seamlessly.
 
-## Agent Architecture
 
+## Agent Architecture
+### Demo Worflow
+![Demo Picture](Demo_Picture.png)
 ### 1. Web Developer Agent
 - **Expertise**: Full-stack web development
 - **Capabilities**:
