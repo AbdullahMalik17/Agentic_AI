@@ -126,8 +126,8 @@ devops_tool = devops_agent.as_tool(
     tool_description="Use this tool for any questions related to DevOps, CI/CD, Docker, or Kubernetes.",
 )
 openai_tool = openai_agent.as_tool(
-    tool_name="OpenAI_Tool",
-    tool_description="Use this tool for any questions about OpenAI, its models (like GPT-4), or its APIs.",
+    tool_name="OpenAISDk_Tool",
+    tool_description="Use this tool for any questions about OpenAI SDk, its models (like GPT-4, GPT5), or its APIs.",
 )
 
 agentic_ai_developer = Agent(
