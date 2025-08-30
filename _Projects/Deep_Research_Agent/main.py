@@ -3,6 +3,7 @@ import asyncio
 from agents import Agent,ItemHelpers, Runner, AsyncOpenAI , OpenAIChatCompletionsModel , RunConfig , function_tool , ModelSettings , RunContextWrapper, set_default_openai_api
 from dotenv import load_dotenv, find_dotenv 
 from tavily import AsyncTavilyClient
+from research_agents import requirement_gathering_agent
 from dataclasses import dataclass 
 # Load environment variables
 load_dotenv(find_dotenv())
@@ -32,8 +33,13 @@ model = OpenAIChatCompletionsModel(
     # Step 3: Define config at run level
 run_config = RunConfig(
     model=model,
-    tracing_disabled=True,  # Disable tracing
+    workflow_name="Deep Research Agent in CLI"
 )
+def deep_research_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
+    return f"""You are {agent.name}, an advanced AI research coordinator.
+Your task is to receive the user's research query and  hand it off to the 'Requirement Gathering Agent' to begin the research process. If the Query is simple , you can directly hand it off to the 'Lead Agent' for immediate action.
+Do not analyze the query, answer the user, or perform any other actions. Your sole function is to initiate the multi-agent workflow."""
+
 @dataclass
 class Info:
     name : str
@@ -70,9 +76,16 @@ async def get_info(Wrapper: RunContextWrapper[Info]) -> str:
         f"his mother name is {Wrapper.context.mother_name},"
         f"and his sister name is {Wrapper.context.sister_name}."
     )
-def basic_dynamic(Wrapper: RunContextWrapper, agent: Agent) -> str:
-    # print(f"\n[CALLING_BASIC_DYNAMIC]\nContext: {Wrapper}\nAgent: {agent}\n")
-    return f"You are {agent.name}.You should do deep to the User prompt and provide the latest knowledge by using web search tool . You give the user information about the user based on the context provided.Always respond in a helpful and friendly manner"
+agent = Agent(
+    name="DeepSearch Agent",
+    instructions=deep_research_instructions,  
+    # instructions="You are DeepSearch Agent . You can answer questions, provide information and give Example(Code) if necessary . For latest information, you can search through websearch tool. Always respond in a helpful and friendly manner",
+    tools=[web_search, get_info],  # <- removed trailing comma
+    model_settings=ModelSettings(temperature=1.9),
+    handoffs = [requirement_gathering_agent]
+)
+chats = []    
+
 async def main():
     user_data = Info(
         name="Abdullah",
@@ -80,41 +93,18 @@ async def main():
         mother_name="Bushra",
         sister_name="Hamna"
     )
-# here I create Agent . 
-    agent = Agent(
-        name="DeepSearch Agent",
-        instructions=basic_dynamic,  
-        # instructions="You are DeepSearch Agent . You can answer questions, provide information and give Example(Code) if necessary . For latest information, you can search through websearch tool. Always respond in a helpful and friendly manner",
-        tools=[web_search, get_info],  # <- removed trailing comma
-        model_settings=ModelSettings(temperature=1.9, max_tokens=2000, tool_choice="auto"),
-    )
-    result = Runner.run_streamed(
-        starting_agent=agent,
-        input="give me information of my profile . make a card according to it ",
-        run_config=run_config,
-        context=user_data,
-    )
 
-    print("=== Run starting ===")
 
-    async for event in result.stream_events():
-        # We'll ignore the raw responses event deltas
-        if event.type == "raw_response_event":
-            continue
-        # When the agent updates, print that
-        elif event.type == "agent_updated_stream_event":
-            print(f"Agent updated: {event.new_agent.name}")
-            continue
-        # When items are generated, print them
-        elif event.type == "run_item_stream_event":
-            if event.item.type == "tool_call_item":
-                print("-- Tool was called")
-            elif event.item.type == "tool_call_output_item":
-                print(f"-- Tool output: {event.item.output}")
-            elif event.item.type == "message_output_item":
-                print(f"-- Message output:\n {ItemHelpers.text_message_output(event.item)}")
-            else:
-                pass  # Ignore other event types
-
-    print("=== Run complete ===")  
+    while True:
+        user_input = input("Enter Your Prompt ... for exit write 'exit'")
+        if user_input.lower() == "exit":
+            break
+        user_message = {"role":"user","content":f"{user_input}"}
+        chats.append(user_message)
+        result = await Runner.run(agent, chats, run_config=run_config,context = user_data , max_turns=30)
+        ai_message = {"role":"assistant","content":result.final_output}
+        chats.append(ai_message)
+        print(result.final_output)    
+        print(chats)    
+        
 asyncio.run(main())  

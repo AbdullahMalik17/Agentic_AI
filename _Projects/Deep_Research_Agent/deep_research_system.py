@@ -8,6 +8,7 @@ from agents import(
     ModelSettings ,
     RunConfig,
     RunContextWrapper,
+    RunHooks
 )
 from dotenv import load_dotenv, find_dotenv 
 from research_agents import  lead_agent , requirement_gathering_agent , planning_agent 
@@ -62,6 +63,38 @@ async def handle_message():
     # Send a welcome message when the chat starts
     await cl.Message(content="Hello! I am DeepSearch Agent , your personal assistant. How can I help you today?").send()
 
+class DeepResearchHooks(RunHooks):
+    def __init__(self):
+        self.active_agents = []
+        self.tool_usage = 0
+        self.handoffs = 0
+    
+    async def on_agent_start(self, context, agent):
+        self.active_agents.append(agent.name)
+        print(f"🌅 SYSTEM: {agent.name} is now working")
+        print(f"   Active agents so far: {self.active_agents}")
+    
+    async def on_llm_start(self, context, agent, system_prompt, input_items):
+        print(f"📞 SYSTEM: {agent.name} is thinking with all his capabilities ...")
+    
+    async def on_llm_end(self, context, agent, response):
+        print(f"🧠✨ SYSTEM: {agent.name} finished thinking")
+    
+    async def on_tool_start(self, context, agent, tool):
+        self.tool_usage += 1
+        print(f"🔨 SYSTEM: {tool.name} used {self.tool_usage[tool.name]} times")
+    
+    async def on_tool_end(self, context, agent, tool, result):
+        print(f"✅🔨 SYSTEM: {agent.name} finished using {tool.name}")
+    
+    async def on_handoff(self, context, from_agent, to_agent):
+        self.handoffs += 1
+        print(f"🏃‍♂️➡️🏃‍♀️ HANDOFF #{self.handoffs}: {from_agent.name} → {to_agent.name}")
+    
+    async def on_agent_end(self, context, agent, output):
+        print(f"✅ SYSTEM: {agent.name} completed their work")
+        print(f"📊 STATS: {len(self.active_agents)} agents used, {self.handoffs} handoffs")
+    
 @cl.on_message
 async def main(message: cl.Message):
     """Process incoming messages and generate responses.""" 
@@ -87,7 +120,8 @@ async def main(message: cl.Message):
             input=history,  # Use the current message instead of full history
             context=user_Info1,
             run_config=run_config,
-            max_turns=50# Pass the config object
+            max_turns=50,  # Pass the config object
+            hooks=DeepResearchHooks()
         )
         await cl.Message(content=result.final_output).send()  # Send the final output as a message
         # # Stream the response token by token and surface tool outputs
