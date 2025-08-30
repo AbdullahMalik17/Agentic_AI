@@ -1,8 +1,7 @@
 from agents import Agent , AsyncOpenAI, OpenAIChatCompletionsModel, function_tool , RunContextWrapper , ModelSettings
-from tavily import AsyncTavilyClient
 import os 
 from dotenv import load_dotenv, find_dotenv
-from tools import get_info
+from tools import get_info , web_search 
 
 _:bool = load_dotenv(find_dotenv())
 #here the API keys 
@@ -18,8 +17,7 @@ tavily_api_key = os.getenv("TAVILY_API_KEY")
 if not tavily_api_key:
     raise ValueError("Tavily API key is not set. Please ensure TAVILY_API_KEY is defined in your .env file.")
 
-# Tavily Client 
-tavily_client = AsyncTavilyClient(api_key=tavily_api_key)
+
 
 # Step 1: Create a provider 
 provider = AsyncOpenAI(
@@ -32,32 +30,6 @@ model = OpenAIChatCompletionsModel(
     model="gemini-2.5-flash"
 ) 
 
-@function_tool 
-async def web_search(query: str): 
-    """Search the web using Tavily."""
-    try:
-        # Await the Tavily search response
-        response = await tavily_client.search(query=query)
-
-        # Initialize the formatted results list
-        formatted_results = []
-
-        # Iterate through the results and format them
-        for result in response['results']:
-            result_text = f"""### {result['title']}
-{result['content']}
-[Source]({result['url']})
----
-"""
-            formatted_results.append(result_text)
-
-        # Join all results into a single string
-        all_results = "\n".join(formatted_results)
-        return all_results
-
-    except Exception as e:
-        # Handle errors gracefully
-        return f"An error occurred during the web search: {str(e)}"
 
 # Here the Dynamic Instructions are as follows :
 def dynamic_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
@@ -84,7 +56,9 @@ Your tasks are:
 2. Identify the key objectives, areas to explore, and any constraints.
 3. Synthesize this into a clear set of requirements.
 4. Minimise the Questioning to ensure the user feels understood and engaged.
+5. Don't ask too many question .
 
+'You have knowledge about agent by using get info tool. Use this tool if the user ask you about his personal his informaton like name .'
 IMPORTANT: Once the requirements are clear, you MUST hand off to the 'Planning Agent'. Do not attempt to answer the user's query or perform any research yourself. Your only goal is to define the research scope for the next agent."""
 
 def planning_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
@@ -95,6 +69,7 @@ Your tasks are:
 2. Break down the research into specific, actionable subtasks.
 3. For each subtask, identify the key search queries that the Lead Agent should use.
 4. Structure your output as a clear, step-by-step research plan.
+5. Use web search tool for better planning if needed .
 
 Your plan should include:
 1. Research Objectives
