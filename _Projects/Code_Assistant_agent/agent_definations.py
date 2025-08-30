@@ -1,5 +1,7 @@
 import os
 from dotenv import load_dotenv, find_dotenv
+import time
+from datetime import datetime
 
 from agents import (
     Agent,
@@ -8,6 +10,7 @@ from agents import (
     ModelSettings,
     OpenAIChatCompletionsModel,
     RunContextWrapper,
+    AgentHooks
 )
 from tavily import AsyncTavilyClient
 
@@ -50,6 +53,50 @@ common_model_settings = ModelSettings(temperature=TEMPERATURE, tool_choice="auto
 common_model = OpenAIChatCompletionsModel(
     openai_client=external_client, model=MODEL_NAME
 )
+# Here Agent Lie Cycle Hooks are defined 
+import time
+from datetime import datetime
+
+class CodeAgentHooks(AgentHooks):
+    def __init__(self):
+        self.start_time = None
+        self.llm_calls = 0
+        self.tool_calls = 0
+    
+    async def on_start(self, context, agent):
+        self.start_time = time.time()
+        self.llm_calls = 0
+        self.tool_calls = 0
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        print(f"🕘 [{timestamp}] {agent.name} became active")
+    
+    async def on_llm_start(self, context, agent, system_prompt, input_items):
+        self.llm_calls += 1
+        print(f"📞 LLM Call #{self.llm_calls}: {agent.name} asking AI for guidance")
+        print(f"   Input: {len(input_items)} items to think about")
+    
+    async def on_llm_end(self, context, agent, response):
+        print(f"🧠✨ LLM Call #{self.llm_calls} completed")
+        print(f"   AI response length: {len(str(response))} characters")
+    
+    async def on_tool_start(self, context, agent, tool):
+        self.tool_calls += 1
+        print(f"🔨 Tool #{self.tool_calls}: {agent.name} using {tool.name}")
+    
+    async def on_tool_end(self, context, agent, tool, result):
+        print(f"✅🔨 Tool #{self.tool_calls} completed")
+        print(f"   Result preview: {str(result)[:50]}...")
+    
+    async def on_handoff(self, context, agent, source):
+        print(f"🏃‍♂️➡️🏃‍♀️ {agent.name} received work from {source.name}")
+        print(f"   Work is being transferred due to specialization")
+    
+    async def on_end(self, context, agent, output):
+        duration = time.time() - self.start_time if self.start_time else 0
+        print(f"✅ {agent.name} FINISHED in {duration:.2f} seconds")
+        print(f"📊 Total: {self.llm_calls} AI calls, {self.tool_calls} tool uses")
+        print(f"🎯 Final result: {str(output)[:100]}...")
+      
 # Initialize Tavily client for web search
 tavily_client = AsyncTavilyClient(api_key=tavily_api_key)
 # --- Tool Definitions ---
@@ -147,4 +194,5 @@ triage_agent = Agent(
     tools=[web_search, get_info],
     # 'required' forces the model to choose a handoff, which is good for a triage agent.
     model_settings=ModelSettings(temperature=TEMPERATURE, tool_choice="auto"),
+    hooks=CodeAgentHooks()
 )
