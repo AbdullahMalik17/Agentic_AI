@@ -124,7 +124,7 @@ async def main(message: cl.Message):
             run_config=run_config,
             max_turns=50,  
             hooks=DeepResearchHooks(),
-            # session = session
+            session = session
         )
         await cl.Message(content=result.final_output).send()      # Send the final output as a message
         
