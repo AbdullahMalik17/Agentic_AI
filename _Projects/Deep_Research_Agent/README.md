@@ -1,110 +1,121 @@
 # Deep Research Agent 🔍
 
-A sophisticated AI-powered deep research Agent  and reseach ## 🛠️ Technical Details
+This project implements a sophisticated, AI-powered multi-agent system designed to perform deep research on any given topic. The agent leverages a team of specialized AI agents to gather requirements, plan a research strategy, and retrieve real-time information from the web.
 
-### System Architecture
-- Tools are implemented using the `@function_tool` decorator
-- Multi-agent system with specialized roles:
-  ```python
-  agents=[requirement_gathering_agent, planning_agent, lead_agent, web_search]
-  ```
-- Context management via dataclass: `Runner.run_streamed(..., context=Info(...))`
-- Real-time response streaming with event-based architecture
-# Demo video 
-![Video of Deep Research Agent](Demo_Video.mp4) 
-
-# Demo Picture
 ![Picture of workflow of Deep Research Agent](Workflow_of_Agent.png)
+![Working Demo Video Of Agent](Demo_Video.mp4)
 
-### 🎯 Usage Examples
+## � Features
 
-1. Research Queries:
-   - "Analyze the latest developments in quantum computing"
-   - "Summarize recent AI regulations in the EU"
-   - "Compare different approaches to sustainable energy"
+- **Multi-Agent System:** Utilizes a team of specialized agents for a structured research process:
+    - **Requirement Gathering Agent:** Clarifies and understands the user's research needs.
+    - **Planning Agent:** Develops a strategic plan to tackle the research query.
+    - **Lead Agent:** Coordinates the workflow between other agents and synthesizes the final report.
+- **Advanced Web Search:** Integrates with the Tavily API for accurate, up-to-date information retrieval.
+- **Interactive Chat Interface:** A user-friendly interface built with Chainlit for a seamless conversational experience.
+- **Real-time Streaming:** Streams responses and thought processes of the agents in real-time.
+- **Asynchronous Architecture:** Built with `asyncio` for efficient, non-blocking I/O operations, especially for web requests.
 
-2. Profile Information:
-   - "What's my profile information?"
-   - "Show my personal details"
+## 🛠️ How It Works
 
-## ⚙️ Configuration
+The system operates as a pipeline of agents. When a user provides a research query, it's first passed to the `requirement_gathering_agent`. Once the requirements are clear, the `planning_agent` creates a step-by-step research plan. The `lead_agent` then executes this plan, using the available tools to gather information.
 
-### Model Settings
+### Web Search Tool (`web_search.py`)
+
+A core component of this system is the `web_search` tool, which provides real-time access to web information.
+
+- **Technology:** It uses the `Tavily` Python client to perform efficient and comprehensive web searches.
+- **Functionality:** The `web_search` function is an asynchronous tool that takes a search query string.
+- **Output:** It fetches search results from the Tavily API, formats them into a clean, readable Markdown format, including the title, a snippet of the content, and a direct link to the source URL. This ensures all information is verifiable.
+
 ```python
-model = OpenAIChatCompletionsModel(
-    openai_client=provider,
-    model="gemini-2.5-flash"
-)
+# Example of a formatted result from web_search
+"""
+### Title of the Web Page
+Snippet of the content from the page...
+##### [Source](https://example.com/source-url)
+---
+"""
 ```
 
-### Agent Settings
-- Temperature: 1.9 (Adjustable for creativity vs precision)
-- Tool Choice: "Auto" Agent decides the usage of tools .
+## � Getting Started
 
-## 🌟 Features
+### Prerequisites
 
-- **Multi-Agent System Architecture**
-  - Requirement Gathering Agent for understanding user needs
-  - Planning Agent for strategic research planning
-  - Lead Agent for project coordination
-  - Web Search Agent for real-time information retrieval
+- Python 3.13+
+- An active internet connection
 
-- **Advanced Web Search Integration**
-  - Powered by Tavily API for accurate and fresh web results
-  - Structured response formatting with source attribution
-  - Real-time data fetching and processing
+### ⚙️ Configuration
 
-- **Interactive Chat Interface**
-  - Built with Chainlit for smooth user interaction
-  - Chat history management
+1.  **Environment Variables:** Create a `.env` file in the root of the project directory and add your API keys:
+    ```env
+    GEMINI_API_KEY="your_gemini_key_here"
+    TAVILY_API_KEY="your_tavily_key_here"
+    ```
 
-## 🔧 Requirements
+2.  **Model Settings:** The primary model can be configured in `deep_research_system.py`. The default is set to `gemini-2.5-flash`.
+    ```python
+    model = OpenAIChatCompletionsModel(
+        openai_client=provider,
+        model="gemini-2.5-flash"
+    )
+    ```
 
-- Python 3.13 or higher
-- Environment variables in `.env`:
-```env
-GEMINI_API_KEY=your_gemini_key_here
-TAVILY_API_KEY=your_tavily_key_here
-```
+### 📦 Installation & Setup
 
-## 🚀 Installation & Setup
+1.  **Clone the repository:**
+    ```bash
+    git clone <your-repo-url>
+    cd _Projects/Deep_Research_Agent
+    ```
 
-1. Clone the repository and navigate to the project directory:
-```bash
-git clone [your-repo-url]
-cd web-search-agent
-```
+2.  **Set up a virtual environment:**
+    ```bash
+    #install uv if you haven't already
+    pip install uv
 
-2. Create and activate a virtual environment:
-```bash
-python -m venv venv
-# On Windows
-.\venv\Scripts\activate
-# On Unix or MacOS
-source venv/bin/activate
-```
+    # Create and activate the virtual environment
+    uv venv
+    source .venv/bin/activate  # On Unix/macOS
+    .venv\Scripts\activate    # On Windows
+    ```
 
-3. Install dependencies using uv:
-```bash
-uv install
-```
+3.  **Install dependencies:**
+    ```bash
+    uv pip install -r requirements.txt 
+    ```
+    *Note: If a `pyproject.toml` is used for dependencies, you might use `uv install`.*
 
-4. Start the application:
-```bash
-uv run chainlit run deep_research_system.py
-```
+4.  **Run the application:**
+    ```bash
+    uv run chainlit run deep_research_system.py
+    ```
 
 ## 📁 Project Structure
+
 ```
-Web_Search_Agent/
-├── main.py                 # Entry point and core application
-├── deep_research_system.py # Agent system implementation
-├── research_agents.py      # Agent definitions and configurations
-├── tools.py               # Utility functions and tools
-├── pyproject.toml         # Project dependencies and settings
-├── chainlit.md           # Welcome screen configuration
-└── README.md             # Documentation
+---
+*This project is for educational and research purposes.*
+Deep_Research_Agent/
+├── .env                    # Environment variables (API keys)
+├── deep_research_system.py # Main application logic and agent definitions
+├── main.py                 # CLI Agent (Alternative entry point)
+├── pyproject.toml          # Project metadata and dependencies
+├── README.md               # This file is for Documentaion
+├── research_agents.py      # Definitions for specialized research agents
+├── tools.py                # Additional tools for agents
+├── uv.lock                 # uv lock file
+├── web_search.py           # Web search tool implementation
+└── Workflow_of_Agent.png   # Diagram of the agent workflow
 ```
+
+## 🎯 Usage Examples
+
+You can interact with the agent through the Chainlit interface with queries like:
+
+-   "Analyze the latest developments in quantum computing."
+-   "Provide a summary of recent AI regulations in the European Union."
+-   "Compare and contrast different approaches to sustainable energy generation."
 
 ### How it works
 - Tools are defined with `@function_tool`.

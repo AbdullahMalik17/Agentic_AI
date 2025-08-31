@@ -1,7 +1,9 @@
 from agents import Agent , AsyncOpenAI, OpenAIChatCompletionsModel, function_tool , RunContextWrapper , ModelSettings
 import os 
 from dotenv import load_dotenv, find_dotenv
-from tools import get_info , web_search 
+from tools import get_info 
+from web_search import web_search
+
 
 _:bool = load_dotenv(find_dotenv())
 #here the API keys 
@@ -13,12 +15,6 @@ if not gemini_api_key:
 # if not openai_api_key:
 #     raise ValueError("OpenAI API key is not set. Please ensure OPENAI_API_KEY is defined in your .env file.")
 
-tavily_api_key = os.getenv("TAVILY_API_KEY")
-if not tavily_api_key:
-    raise ValueError("Tavily API key is not set. Please ensure TAVILY_API_KEY is defined in your .env file.")
-
-
-
 # Step 1: Create a provider 
 provider = AsyncOpenAI(
     api_key=gemini_api_key,
@@ -29,7 +25,7 @@ model = OpenAIChatCompletionsModel(
     openai_client=provider,
     model="gemini-2.5-flash"
 ) 
-
+# Initialize Tavily client for web search
 
 # Here the Dynamic Instructions are as follows :
 def dynamic_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:

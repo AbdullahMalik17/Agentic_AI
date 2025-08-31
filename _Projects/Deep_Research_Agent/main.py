@@ -96,8 +96,8 @@ async def main():
 
 
     while True:
-        user_input = input("Enter Your Prompt ... for exit write 'exit'")
-        if user_input.lower() == "exit":
+        user_input = input("Enter Your Prompt ...")
+        if user_input.lower() in ["exit","quit"]:
             break
         user_message = {"role":"user","content":f"{user_input}"}
         chats.append(user_message)
@@ -105,6 +105,6 @@ async def main():
         ai_message = {"role":"assistant","content":result.final_output}
         chats.append(ai_message)
         print(result.final_output)    
-        print(chats)    
+ 
         
 asyncio.run(main())  

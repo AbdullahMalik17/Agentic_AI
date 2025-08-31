@@ -5,3 +5,6 @@ uv.lock
 .files 
 __pycache__ 
 chainlit.md
+Database.bd
+Database.bd-shm
+Database.bd-wal 
