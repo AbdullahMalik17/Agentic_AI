@@ -1,6 +1,6 @@
 import os
 import asyncio
-from agents import Agent,ItemHelpers, Runner, AsyncOpenAI , OpenAIChatCompletionsModel , RunConfig , function_tool , ModelSettings , RunContextWrapper, set_default_openai_api
+from agents import Agent, Runner, AsyncOpenAI , OpenAIChatCompletionsModel , RunConfig , function_tool , ModelSettings , RunContextWrapper, set_default_openai_api , SQLiteSession
 from dotenv import load_dotenv, find_dotenv 
 from tavily import AsyncTavilyClient
 from research_agents import requirement_gathering_agent
@@ -35,6 +35,8 @@ run_config = RunConfig(
     model=model,
     workflow_name="Deep Research Agent in CLI"
 )
+#   step 4 : Define Session for history 
+session = SQLiteSession("User_Abdullah","Database.bd")
 def deep_research_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
     return f"""You are {agent.name}, an advanced AI research coordinator.
 Your task is to receive the user's research query and  hand it off to the 'Requirement Gathering Agent' to begin the research process. If the Query is simple , you can directly hand it off to the 'Lead Agent' for immediate action.
@@ -101,7 +103,7 @@ async def main():
             break
         user_message = {"role":"user","content":f"{user_input}"}
         chats.append(user_message)
-        result = await Runner.run(agent, chats, run_config=run_config,context = user_data , max_turns=30)
+        result = await Runner.run(agent, chats, run_config=run_config,context = user_data , max_turns=30,session = session)
         ai_message = {"role":"assistant","content":result.final_output}
         chats.append(ai_message)
         print(result.final_output)    
