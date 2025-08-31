@@ -102,10 +102,9 @@ lead_agent: Agent = Agent(
     model=model,
     model_settings=ModelSettings(
         temperature=1.9,  #  higher for creative synthesis
-        tool_choice="auto"
+        tool_choice="auto",
     )
 )
-
 planning_agent: Agent = Agent(
     name="Planning Agent",
     instructions=planning_instructions,
