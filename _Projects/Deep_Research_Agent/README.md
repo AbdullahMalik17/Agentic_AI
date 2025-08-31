@@ -3,7 +3,6 @@
 This project implements a sophisticated, AI-powered multi-agent system designed to perform deep research on any given topic. The agent leverages a team of specialized AI agents to gather requirements, plan a research strategy, and retrieve real-time information from the web.
 
 ![Picture of workflow of Deep Research Agent](Workflow_of_Agent.png)
-![Working Demo Video Of Agent](Demo_Video.mp4)
 
 ## � Features
 
