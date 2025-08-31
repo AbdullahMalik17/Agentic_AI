@@ -3,7 +3,10 @@ import chainlit as cl
 from chainlit import on_message, on_chat_start
 from agent_definations import triage_agent , Info 
 
-from agents import Runner , MaxTurnsExceeded , RunConfig 
+from agents import Runner , MaxTurnsExceeded , RunConfig , SQLiteSession 
+
+# Session for memory Management .
+session = SQLiteSession("Conservation","Code_Assistant.db")
   
 @on_chat_start
 async def start():  
@@ -11,7 +14,6 @@ async def start():
     Initializes the agent and tool setup for a new chat session.
     This function is called once when a user starts a new chat.
     """
-    cl.user_session.set("history", [])
 
     # Store the main entry-point agent in the user session
     cl.user_session.set("triage_agent", triage_agent)
@@ -30,10 +32,6 @@ async def main(message: cl.Message):
     history = cl.user_session.get("history")
     msg = cl.Message(content="")
     await msg.send() 
-
-    # Append the user's message to the history
-    history.append({"role": "user", "content": message.content})
-
     try:
         run_config = RunConfig(
             workflow_name="Code_Assistant_Workflow",
@@ -42,10 +40,11 @@ async def main(message: cl.Message):
         try:    
         # Run the agent with the latest message and context
             result = Runner.run_streamed(starting_agent=triage_agent,
-                                         input=history,
+                                         input=message.content,
                                          run_config=run_config,
                                          context=info,
-                                         max_turns=30)
+                                         max_turns=30,
+                                         session=session)
         # Stream the response token by token and surface tool outputs
         except MaxTurnsExceeded as e:
             await cl.Message(content=f"Max turns exceeded: {e}").send()
@@ -63,8 +62,6 @@ async def main(message: cl.Message):
 
         # Finalize the streamed message and persist history
         await msg.update()
-        history.append({"role": "assistant", "content": msg.content})
-        cl.user_session.set("history", history)
 
     except Exception as e:
         error_message = f"An error occurred: {str(e)}"

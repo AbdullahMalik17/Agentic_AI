@@ -14,7 +14,7 @@ from agents import(
 )
 from dotenv import load_dotenv, find_dotenv 
 from research_agents import  lead_agent , requirement_gathering_agent , planning_agent 
-from tools import Info , get_info
+from tools import Info , get_memories , save_memories
 # Load environment variables
 load_dotenv(find_dotenv())
 # Force Agents SDK to use Chat Completions API to avoid Responses API event types
@@ -48,15 +48,15 @@ session = SQLiteSession("User_Abdullah","Database.bd")
 def deep_research_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
     return f"""You are {agent.name}, an advanced AI research coordinator.
 Your task is to receive the user's research query and  hand it off to the 'Requirement Gathering Agent' to begin the research process. If the Query is simple , you can directly hand it off to the 'Lead Agent' for immediate action.
-Do not analyze the query, answer the user, or perform any other actions. Your sole function is to initiate the multi-agent workflow."""
+Do not analyze the query, answer the user, or perform any other actions. Your sole function is to initiate the multi-agent workflow.
+[Note: You are allowed to use get and save memories tools for better performance]"""
 
 # Create the main DeepSearch Agent with improved configuration
 agent : Agent = Agent(
     name="DeepSearch Agent",
     instructions=deep_research_instructions,
     model=model,
-    # The coordinator's only job is to kick off the workflow by handing off to the first agent.
-    # The subsequent handoffs are defined within each agent, creating a chain.
+    tools=[get_memories, save_memories],
     handoffs=[requirement_gathering_agent],
     model_settings=ModelSettings(
         temperature=0.7,  # Lower temperature for more focused coordination
@@ -124,7 +124,7 @@ async def main(message: cl.Message):
             run_config=run_config,
             max_turns=50,  
             hooks=DeepResearchHooks(),
-            session = session
+            # session = session
         )
         await cl.Message(content=result.final_output).send()      # Send the final output as a message
         

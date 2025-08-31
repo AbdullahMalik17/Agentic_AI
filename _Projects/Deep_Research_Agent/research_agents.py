@@ -1,7 +1,7 @@
 from agents import Agent , AsyncOpenAI, OpenAIChatCompletionsModel, function_tool , RunContextWrapper , ModelSettings
 import os 
 from dotenv import load_dotenv, find_dotenv
-from tools import get_info 
+from tools import get_info
 from web_search import web_search
 
 

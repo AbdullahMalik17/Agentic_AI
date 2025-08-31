@@ -7,3 +7,6 @@ uv.lock
 __pycache__  
 chainlit.md  
 system_prompt.py 
+Code_Assistant.db
+Code_Assistant.db-shm
+Code_Assistant.db-wal
