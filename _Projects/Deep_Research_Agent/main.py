@@ -36,7 +36,7 @@ run_config = RunConfig(
     workflow_name="Deep Research Agent in CLI"
 )
 #   step 4 : Define Session for history 
-session = SQLiteSession("User_Abdullah","Database.bd")
+session = SQLiteSession("User_Bushra","Database.bd")
 def deep_research_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
     return f"""You are {agent.name}, an advanced AI research coordinator.
 Your task is to receive the user's research query and  hand it off to the 'Requirement Gathering Agent' to begin the research process. If the Query is simple , you can directly hand it off to the 'Lead Agent' for immediate action.

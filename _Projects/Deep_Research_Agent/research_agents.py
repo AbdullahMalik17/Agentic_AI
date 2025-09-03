@@ -1,8 +1,10 @@
 from agents import Agent , AsyncOpenAI, OpenAIChatCompletionsModel, function_tool , RunContextWrapper , ModelSettings
+from agents.tool_context import ToolContext 
 import os 
 from dotenv import load_dotenv, find_dotenv
-from tools import get_info , save_memories , get_memories 
+from tools import get_info , Info
 from web_search import web_search 
+from mem0 import MemoryClient
 
 
 _:bool = load_dotenv(find_dotenv())
@@ -25,10 +27,36 @@ model = OpenAIChatCompletionsModel(
     openai_client=provider,
     model="gemini-2.5-flash"
 ) 
-# Initialize Tavily client for web search
+
+
+mem0_api_key =os.getenv("MEM0_API_KEY")
+mem_client = MemoryClient(api_key=mem0_api_key)
+
+def sanitize_user_id(raw_user_id: str) -> str:
+    """Sanitizes the user_id for mem0 by replacing problematic characters."""
+    import re
+    # Replace any character that is not a letter, number, underscore, or hyphen with an underscore.
+    return re.sub(r'[^a-zA-Z0-9_-]', '_', raw_user_id)
+
+@function_tool
+async def search_user_memory(context: ToolContext[Info], query: str):
+    """Use this tool to search user memories."""
+    user_id = sanitize_user_id(context.context.name)
+    response = mem_client.search(query=query, user_id=user_id, top_k=3)
+    return response
+
+@function_tool
+async def save_user_memory(context:ToolContext[Info], query: str):
+    """Use this tool to save user memories."""
+    user_id = sanitize_user_id(context.context.name)
+    response = mem_client.add([{"role": "user", "content": query}], user_id=user_id)
+    return response
 
 # Here the Dynamic Instructions are as follows :
-def dynamic_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
+def dynamic_instructions(Wrapper: RunContextWrapper[Info], agent: Agent) -> str:
+    user_id = sanitize_user_id(Wrapper.context.name)
+    response= mem_client.search(query ="general", user_id=user_id, top_k=3)
+    print(response)
     return f"""You are the {agent.name}, an expert researcher responsible for executing a research plan.
     
 You have been given a detailed plan from the Planning Agent . You should follow the plan of planning agent. Your tasks are:
@@ -41,10 +69,13 @@ You have been given a detailed plan from the Planning Agent . You should follow 
    - Supporting evidence
    - Recommendations (if applicable)
 5. ALWAYS cite your sources properly using markdown links.
-6. Always save import chats in save memory tool for better Performance
+6. Use search_user_memory tool to get memory about user and use save_user_memory tool to save it .
 You are the final agent in the chain. Your response will be sent directly to the user. Ensure it is comprehensive, accurate, and well-structured."""
 
-def gather_requirements_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
+def gather_requirements_instructions(Wrapper: RunContextWrapper[Info], agent: Agent) -> str:
+    user_id = sanitize_user_id(Wrapper.context.name)
+    response= mem_client.search(query="general", user_id=user_id, top_k=3)
+    print(response)
     return f"""You are the {agent.name}, responsible for understanding and clarifying the user's research requirements.
 
 Your tasks are:
@@ -53,12 +84,16 @@ Your tasks are:
 3. Synthesize this into a clear set of requirements.
 4. Minimise the Questioning to ensure the user feels understood and engaged.
 5. Don't ask too many question .
-6. Always save import chats in save memory tool for better Performance
-
-'You have knowledge about agent by using get info tool. Use this tool if the user ask you about his personal his informaton like name .'
+6. Use get_memory tool to get memory about user and use save_memory tool to save it .
+ 
+ 
+'You have knowledge about agent by using get info tool. Use this tool if the user ask you about his personal his information like name .'
 IMPORTANT: Once the requirements are clear, you MUST hand off to the 'Planning Agent'. Do not attempt to answer the user's query or perform any research yourself. Your only goal is to define the research scope for the next agent."""
 
-def planning_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
+def planning_instructions(Wrapper: RunContextWrapper[Info], agent: Agent) -> str:
+    user_id = sanitize_user_id(Wrapper.context.name)
+    response= mem_client.search(query="general", user_id=user_id, top_k=3)
+    print(response)
     return f"""You are the {agent.name}, a strategic research planner. Your SOLE responsibility is to create a detailed research plan based on the provided requirements.
 
 Your tasks are:
@@ -100,7 +135,7 @@ reflect_agent: Agent = Agent(
 lead_agent: Agent = Agent(
     name="Lead Agent",
     instructions=dynamic_instructions,
-    tools=[web_search, get_info, save_memories, get_memories],  # Added get_info tool to the final agent
+    tools=[web_search, get_info,save_user_memory,search_user_memory],  # Added get_info tool to the final agent
     model=model,
     model_settings=ModelSettings(
         temperature=1.9,  #  higher for creative synthesis
@@ -111,9 +146,9 @@ planning_agent: Agent = Agent(
     name="Planning Agent",
     instructions=planning_instructions,
     model=model,
-    tools=[web_search,save_memories,get_memories],  # For plan validation and initial research
+    tools=[web_search,save_user_memory,search_user_memory],  # For plan validation and initial research
     handoffs=[lead_agent],  # Chained handoff
-    model_settings=ModelSettings(
+    model_settings=ModelSettings( 
         temperature=0.8,
         tool_choice="auto"
     )
@@ -123,7 +158,7 @@ requirement_gathering_agent: Agent = Agent(
     name="Requirement Gathering Agent",
     instructions=gather_requirements_instructions,
     model=model,
-    tools=[web_search,get_info,save_memories,get_memories],  # Allow web search for requirement validation
+    tools=[web_search,get_info,save_user_memory,search_user_memory],  # Allow web search for requirement validation
     handoffs=[planning_agent],  # Chained handoff
     model_settings=ModelSettings(
         temperature=0.7,  # Lower temperature for more focused responses

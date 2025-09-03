@@ -13,8 +13,8 @@ from agents import(
     SQLiteSession
 )
 from dotenv import load_dotenv, find_dotenv 
-from research_agents import  lead_agent , requirement_gathering_agent , planning_agent 
-from tools import Info , get_memories , save_memories
+from research_agents import  requirement_gathering_agent
+from tools import Info ,save_user_memory, search_user_memory
 # Load environment variables
 load_dotenv(find_dotenv())
 # Force Agents SDK to use Chat Completions API to avoid Responses API event types
@@ -49,14 +49,14 @@ def deep_research_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
     return f"""You are {agent.name}, an advanced AI research coordinator.
 Your task is to receive the user's research query and  hand it off to the 'Requirement Gathering Agent' to begin the research process. If the Query is simple , you can directly hand it off to the 'Lead Agent' for immediate action.
 Do not analyze the query, answer the user, or perform any other actions. Your sole function is to initiate the multi-agent workflow.
-[Note: You are allowed to use get and save memories tools for better performance]"""
+"""
 
 # Create the main DeepSearch Agent with improved configuration
 agent : Agent = Agent(
     name="DeepSearch Agent",
     instructions=deep_research_instructions,
     model=model,
-    tools=[get_memories, save_memories],
+    tools=[search_user_memory, save_user_memory],
     handoffs=[requirement_gathering_agent],
     model_settings=ModelSettings(
         temperature=0.7,  # Lower temperature for more focused coordination
@@ -115,7 +115,7 @@ async def main(message: cl.Message):
     try:
 
         #give the data of the user to the agent 
-        user_Info1 = Info(name="Abdullah", father_name="Athar", mother_name="Bushra",sister_name="Amna")
+        user_Info1 = Info(name="abdullah",interests=["AI","Web development","Agentic AI"])
    
         result = Runner.run_sync(
             starting_agent=agent,
@@ -144,7 +144,7 @@ async def main(message: cl.Message):
         # await msg.update()
 
     except MaxTurnsExceeded as e:
-        await cl.Message(content=f"Max Turns Exceed . Pls ask again your Question .")
+        await cl.Message(content=f"Max Turns Exceed . Please ask again your Question .")
   
     except Exception as e:
         await cl.Message(content=f"Error:{str(e)}").send()
