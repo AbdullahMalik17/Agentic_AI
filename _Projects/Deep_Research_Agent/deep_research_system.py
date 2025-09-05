@@ -13,7 +13,7 @@ from agents import(
     SQLiteSession
 )
 from dotenv import load_dotenv, find_dotenv 
-from research_agents import  requirement_gathering_agent
+from research_agents import  requirement_gathering_agent , lead_agent
 from tools import Info ,save_user_memory, search_user_memory
 # Load environment variables
 load_dotenv(find_dotenv())
@@ -43,12 +43,15 @@ model = OpenAIChatCompletionsModel(
 # Step 3:  Create a RunConfig to pass the session name for tracing
 run_config = RunConfig(workflow_name="Deep Research Session")
 
-# Step 4: Create a session memory by using SQLiteSession
-session = SQLiteSession("User_Abdullah","Database.bd")
 def deep_research_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
     return f"""You are {agent.name}, an advanced AI research coordinator.
-Your task is to receive the user's research query and  hand it off to the 'Requirement Gathering Agent' to begin the research process. If the Query is simple , you can directly hand it off to the 'Lead Agent' for immediate action.
-Do not analyze the query, answer the user, or perform any other actions. Your sole function is to initiate the multi-agent workflow.
+Your primary task is to manage the research workflow.
+
+1.  **Analyze User Memory**: Before doing anything else, use the `search_user_memory` tool with the user's query to see if there is relevant history or context from past interactions. This can help you understand the user's needs better.
+2.  **Route the Query**: Based on the user's query (and any context from memory), hand it off to the 'Requirement Gathering Agent' to begin the detailed research process. If the query is simple, you can hand it off to the 'Lead Agent' for immediate action.
+3.  **Save Context**: After the interaction, use the `save_user_memory` tool to save any important new information or context that could be useful for future research requests from this user.
+
+Your sole function is to initiate and coordinate the multi-agent workflow. Do not answer the user directly.
 """
 
 # Create the main DeepSearch Agent with improved configuration
@@ -57,7 +60,7 @@ agent : Agent = Agent(
     instructions=deep_research_instructions,
     model=model,
     tools=[search_user_memory, save_user_memory],
-    handoffs=[requirement_gathering_agent],
+    handoffs=[requirement_gathering_agent,lead_agent],
     model_settings=ModelSettings(
         temperature=0.7,  # Lower temperature for more focused coordination
         )
@@ -101,22 +104,42 @@ class DeepResearchHooks(RunHooks):
 @cl.on_chat_start
 async def handle_message():
     """Handle the chat start event."""
+    # Create a new session for each chat, identified by the user's session ID.
+    # This ensures that conversation history is isolated between chats.
+    session = SQLiteSession("abdullah1","Database.bd")
+    cl.user_session.set("session", session)
+
     # Send a welcome message when the chat starts
     await cl.Message(content="Hello! I am DeepSearch Agent , your personal assistant. How can I help you today?").send()
 
 
 @cl.on_message
 async def main(message: cl.Message):
-    """Process incoming messages and generate responses.""" 
- 
-    msg = cl.Message(content="")
-    await msg.send()  
-    
-    try:
+    """Process incoming messages and generate responses."""
+    # Retrieve the session for the current user chat
+    session = cl.user_session.get("session")
 
-        #give the data of the user to the agent 
-        user_Info1 = Info(name="abdullah",interests=["AI","Web development","Agentic AI"])
-   
+    delete_commands = [
+        "remove session",
+        "delete session",
+        "remove session history",
+        "delete session history",
+    ]
+    if message.content.lower().strip() in delete_commands:
+        """It removes the session history for the current chat when the User asks."""
+        if session:
+            await session.clear_session()
+            print(f"Session History Removed for session_id: {session.session_id}")
+        await cl.Message(content="Your session history has been cleared.").send()
+        return
+
+    msg = cl.Message(content="")
+    await msg.send()
+
+    try:
+        # give the data of the user to the agent
+        user_Info1 = Info(name="abdullah", interests=["AI", "Web development", "Agentic AI"])
+
         result = Runner.run_sync(
             starting_agent=agent,
             input=message.content,  
@@ -124,9 +147,8 @@ async def main(message: cl.Message):
             run_config=run_config,
             max_turns=50,  
             hooks=DeepResearchHooks(),
-            session = session
+            session=session,
         )
-        await cl.Message(content=result.final_output).send()      # Send the final output as a message
         
         # # Stream the response token by token and surface tool outputs
         # async for event in result.stream_events():
@@ -140,11 +162,11 @@ async def main(message: cl.Message):
         #             if output_text:
         #                 await msg.stream_token(output_text)
 
-        # Finalize the streamed message and persist history
-        # await msg.update()
+        await cl.Message(content=result.final_output).send()
+
 
     except MaxTurnsExceeded as e:
-        await cl.Message(content=f"Max Turns Exceed . Please ask again your Question .")
+        await cl.Message(content="Max Turns Exceeded. Please ask your Question again.").send()
   
     except Exception as e:
         await cl.Message(content=f"Error:{str(e)}").send()

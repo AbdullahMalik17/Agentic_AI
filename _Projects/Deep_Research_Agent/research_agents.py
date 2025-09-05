@@ -42,7 +42,7 @@ def sanitize_user_id(raw_user_id: str) -> str:
 async def search_user_memory(context: ToolContext[Info], query: str):
     """Use this tool to search user memories."""
     user_id = sanitize_user_id(context.context.name)
-    response = mem_client.search(query=query, user_id=user_id, top_k=3)
+    response = mem_client.search(query=query, user_id=user_id, top_k=10)
     return response
 
 @function_tool
@@ -83,11 +83,11 @@ Your tasks are:
 2. Identify the key objectives, areas to explore, and any constraints.
 3. Synthesize this into a clear set of requirements.
 4. Minimise the Questioning to ensure the user feels understood and engaged.
-5. Don't ask too many question .
-6. Use get_memory tool to get memory about user and use save_memory tool to save it .
+5. Don't ask too many questions.
+6. Use the 'search_user_memory' tool to get memory about the user and the 'save_user_memory' tool to save it.
  
  
-'You have knowledge about agent by using get info tool. Use this tool if the user ask you about his personal his information like name .'
+'You have knowledge about the user by using the 'get_info' tool. Use this tool if the user asks you about their personal information like their name.'
 IMPORTANT: Once the requirements are clear, you MUST hand off to the 'Planning Agent'. Do not attempt to answer the user's query or perform any research yourself. Your only goal is to define the research scope for the next agent."""
 
 def planning_instructions(Wrapper: RunContextWrapper[Info], agent: Agent) -> str:
@@ -102,7 +102,7 @@ Your tasks are:
 3. For each subtask, identify the key search queries that the Lead Agent should use.
 4. Structure your output as a clear, step-by-step research plan.
 5. Use web search tool for better planning if needed .
-6. Always save import chats in save memory tool for better Performance
+6. Always save important chats in the 'save_user_memory' tool for better performance.
 
 Your plan should include:
 1. Research Objectives

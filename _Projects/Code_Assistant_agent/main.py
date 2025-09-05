@@ -3,11 +3,37 @@ import chainlit as cl
 from chainlit import on_message, on_chat_start
 from agent_definations import triage_agent , Info 
 
-from agents import Runner , MaxTurnsExceeded , RunConfig , SQLiteSession 
+from agents import Agent,Runner , MaxTurnsExceeded , RunConfig , SQLiteSession , RunHooks , RunContextWrapper 
 
 # Session for memory Management .
 session = SQLiteSession("Conservation","Code_Assistant.db")
-  
+class RunHookCycle(RunHooks):
+    def __init__(self):
+        self.active_agents = []
+        self.handoffs = 0
+        self.tool_usage = {}
+        
+    async def on_agent_start(self, context: RunContextWrapper, agent: Agent):
+        self.active_agents.append(agent.name)
+        print(self.active_agents)
+        print(f"{agent.name} is started working...")
+        
+    async def on_tool_start(self, context: RunContextWrapper, agent: Agent, tool):
+        print(f"{tool.name} is started working by an agent {agent.name}...")
+        self.tool_usage=+1
+    async def on_tool_end(self, context: RunContextWrapper, agent: Agent, tool, result: str):
+        print(f"{tool.name} has finished working...")
+     
+    async def on_handoff(self, context: RunContextWrapper, from_agent:Agent, to_agent:Agent):
+        self.handoffs=+1
+        print(f"{from_agent} handoffs to the {to_agent}")    
+ 
+    async def on_agent_end(self, context: RunContextWrapper, agent: Agent , output):    
+        print(f"{agent.name} is finished working with final output....")
+        print(f"Active agents are : {self.active_agents}")
+        print(f"Total Handoffs are : {self.handoffs}")
+        print(f"Tools Usage are : {self.tool_usage}")
+        
 @on_chat_start
 async def start():  
     """
@@ -30,7 +56,7 @@ async def main(message: cl.Message):
     """
     triage_agent = cl.user_session.get("triage_agent")
     history = cl.user_session.get("history")
-    msg = cl.Message(content="")
+    msg = cl.Message(content="Thinking ...")
     await msg.send() 
     try:
         run_config = RunConfig(
@@ -44,7 +70,8 @@ async def main(message: cl.Message):
                                          run_config=run_config,
                                          context=info,
                                          max_turns=30,
-                                         session=session)
+                                         session=session,
+                                         hooks=RunHookCycle())
         # Stream the response token by token and surface tool outputs
         except MaxTurnsExceeded as e:
             await cl.Message(content=f"Max turns exceeded: {e}").send()

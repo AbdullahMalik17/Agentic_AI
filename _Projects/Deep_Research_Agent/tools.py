@@ -11,6 +11,10 @@ class Info:
     name: str
     interests: [str]
 # It sanitise that the data is according to the syntax .
+
+mem0_api_key =os.getenv("MEM0_API_KEY")
+mem_client = MemoryClient(api_key=mem0_api_key)
+
 def sanitize_user_id(raw_user_id: str) -> str:
     """Sanitizes the user_id for mem0 by replacing problematic characters."""
     import re
@@ -18,18 +22,17 @@ def sanitize_user_id(raw_user_id: str) -> str:
     return re.sub(r'[^a-zA-Z0-9_-]', '_', raw_user_id)
 
 @function_tool
-async def get_info(Wrapper: ToolContext[Info]) -> str:
-    """Return the user's profile information from the run context."""
-    return (
-        f"The name of user is {Wrapper.context.name}, "
-        f"User Interests are {Wrapper.context.interests}"   
-    )
-    
-@function_tool
 async def search_user_memory(context: ToolContext[Info], query: str):
     """Use this tool to search user memories."""
     user_id = sanitize_user_id(context.context.name)
-    response = mem_client.search(query=query, user_id=user_id, top_k=3)
+    response = mem_client.search(query=query, user_id=user_id, top_k=10)
+    return response
+
+@function_tool
+async def save_user_memory(context:ToolContext[Info], query: str):
+    """Use this tool to save user memories."""
+    user_id = sanitize_user_id(context.context.name)
+    response = mem_client.add([{"role": "user", "content": query}], user_id=user_id)
     return response
 
 @function_tool
