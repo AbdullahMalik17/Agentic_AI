@@ -2,10 +2,8 @@ from agents import Agent , AsyncOpenAI, OpenAIChatCompletionsModel, function_too
 from agents.tool_context import ToolContext 
 import os 
 from dotenv import load_dotenv, find_dotenv
-from tools import get_info , Info
+from tools import Info , get_info ,save_user_memory , search_user_memory
 from web_search import web_search 
-from mem0 import MemoryClient
-
 
 _:bool = load_dotenv(find_dotenv())
 #here the API keys 
@@ -13,9 +11,9 @@ gemini_api_key = os.environ.get("GEMINI_API_KEY")
 if not gemini_api_key:
     raise ValueError("Gemini API key is not set . Please , ensure that it is defined in your env file.")
 
-# openai_api_key = os.getenv("OPENAI_API_KEY")
-# if not openai_api_key:
-#     raise ValueError("OpenAI API key is not set. Please ensure OPENAI_API_KEY is defined in your .env file.")
+openai_api_key = os.getenv("OPENAI_API_KEY")
+if not openai_api_key:
+    raise ValueError("OpenAI API key is not set. Please ensure OPENAI_API_KEY is defined in your .env file.")
 
 # Step 1: Create a provider 
 provider = AsyncOpenAI(
@@ -28,35 +26,8 @@ model = OpenAIChatCompletionsModel(
     model="gemini-2.5-flash"
 ) 
 
-
-mem0_api_key =os.getenv("MEM0_API_KEY")
-mem_client = MemoryClient(api_key=mem0_api_key)
-
-def sanitize_user_id(raw_user_id: str) -> str:
-    """Sanitizes the user_id for mem0 by replacing problematic characters."""
-    import re
-    # Replace any character that is not a letter, number, underscore, or hyphen with an underscore.
-    return re.sub(r'[^a-zA-Z0-9_-]', '_', raw_user_id)
-
-@function_tool
-async def search_user_memory(context: ToolContext[Info], query: str):
-    """Use this tool to search user memories."""
-    user_id = sanitize_user_id(context.context.name)
-    response = mem_client.search(query=query, user_id=user_id, top_k=10)
-    return response
-
-@function_tool
-async def save_user_memory(context:ToolContext[Info], query: str):
-    """Use this tool to save user memories."""
-    user_id = sanitize_user_id(context.context.name)
-    response = mem_client.add([{"role": "user", "content": query}], user_id=user_id)
-    return response
-
 # Here the Dynamic Instructions are as follows :
 def dynamic_instructions(Wrapper: RunContextWrapper[Info], agent: Agent) -> str:
-    user_id = sanitize_user_id(Wrapper.context.name)
-    response= mem_client.search(query ="general", user_id=user_id, top_k=3)
-    print(response)
     return f"""You are the {agent.name}, an expert researcher responsible for executing a research plan.
     
 You have been given a detailed plan from the Planning Agent . You should follow the plan of planning agent. Your tasks are:
@@ -69,13 +40,10 @@ You have been given a detailed plan from the Planning Agent . You should follow 
    - Supporting evidence
    - Recommendations (if applicable)
 5. ALWAYS cite your sources properly using markdown links.
-6. Use search_user_memory tool to get memory about user and use save_user_memory tool to save it .
+6. Use search_user_memory tool to get memory about user and use save_user_memory tool to save it . Always search by using tool 'search_user_memory' data about user and save important chats in the 'save_user_memory' tool for better performance. 
 You are the final agent in the chain. Your response will be sent directly to the user. Ensure it is comprehensive, accurate, and well-structured."""
 
 def gather_requirements_instructions(Wrapper: RunContextWrapper[Info], agent: Agent) -> str:
-    user_id = sanitize_user_id(Wrapper.context.name)
-    response= mem_client.search(query="general", user_id=user_id, top_k=3)
-    print(response)
     return f"""You are the {agent.name}, responsible for understanding and clarifying the user's research requirements.
 
 Your tasks are:
@@ -84,16 +52,13 @@ Your tasks are:
 3. Synthesize this into a clear set of requirements.
 4. Minimise the Questioning to ensure the user feels understood and engaged.
 5. Don't ask too many questions.
-6. Use the 'search_user_memory' tool to get memory about the user and the 'save_user_memory' tool to save it.
- 
+6. Always search by using tool 'search_user_memory' data about user and save important chats in the 'save_user_memory' tool for better performance.
+
  
 'You have knowledge about the user by using the 'get_info' tool. Use this tool if the user asks you about their personal information like their name.'
 IMPORTANT: Once the requirements are clear, you MUST hand off to the 'Planning Agent'. Do not attempt to answer the user's query or perform any research yourself. Your only goal is to define the research scope for the next agent."""
 
 def planning_instructions(Wrapper: RunContextWrapper[Info], agent: Agent) -> str:
-    user_id = sanitize_user_id(Wrapper.context.name)
-    response= mem_client.search(query="general", user_id=user_id, top_k=3)
-    print(response)
     return f"""You are the {agent.name}, a strategic research planner. Your SOLE responsibility is to create a detailed research plan based on the provided requirements.
 
 Your tasks are:
@@ -102,7 +67,7 @@ Your tasks are:
 3. For each subtask, identify the key search queries that the Lead Agent should use.
 4. Structure your output as a clear, step-by-step research plan.
 5. Use web search tool for better planning if needed .
-6. Always save important chats in the 'save_user_memory' tool for better performance.
+6. Always search by using tool 'search_user_memory' data about user for proper plannng save important chats in the 'save_user_memory' tool for better performance.
 
 Your plan should include:
 1. Research Objectives
@@ -137,6 +102,7 @@ lead_agent: Agent = Agent(
     instructions=dynamic_instructions,
     tools=[web_search, get_info,save_user_memory,search_user_memory],  # Added get_info tool to the final agent
     model=model,
+    handoff_description="",
     model_settings=ModelSettings(
         temperature=1.9,  #  higher for creative synthesis
         tool_choice="auto",

@@ -47,12 +47,9 @@ def deep_research_instructions(Wrapper: RunContextWrapper, agent: Agent) -> str:
     return f"""You are {agent.name}, an advanced AI research coordinator.
 Your primary task is to manage the research workflow.
 
-1.  **Analyze User Memory**: Before doing anything else, use the `search_user_memory` tool with the user's query to see if there is relevant history or context from past interactions. This can help you understand the user's needs better.
-2.  **Route the Query**: Based on the user's query (and any context from memory), hand it off to the 'Requirement Gathering Agent' to begin the detailed research process. If the query is simple, you can hand it off to the 'Lead Agent' for immediate action.
-3.  **Save Context**: After the interaction, use the `save_user_memory` tool to save any important new information or context that could be useful for future research requests from this user.
-
-Your sole function is to initiate and coordinate the multi-agent workflow. Do not answer the user directly.
-"""
+1. Your task is to receive the user's research query and  hand it off to the 'Requirement Gathering Agent' to begin the research process. If the Query is simple , you can directly hand it off to the 'Lead Agent' for immediate action.
+2. Do not analyze the query, answer the user, or perform any other actions. Your sole function is to initiate the multi-agent workflow.
+3. [Note: You are allowed to use get and save memories tools for better performance]"""
 
 # Create the main DeepSearch Agent with improved configuration
 agent : Agent = Agent(
@@ -106,7 +103,7 @@ async def handle_message():
     """Handle the chat start event."""
     # Create a new session for each chat, identified by the user's session ID.
     # This ensures that conversation history is isolated between chats.
-    session = SQLiteSession("abdullah1","Database.bd")
+    session = SQLiteSession("abdullah","Database.bd")
     cl.user_session.set("session", session)
 
     # Send a welcome message when the chat starts
@@ -133,7 +130,7 @@ async def main(message: cl.Message):
         await cl.Message(content="Your session history has been cleared.").send()
         return
 
-    msg = cl.Message(content="")
+    msg = cl.Message(content="Thinking...")
     await msg.send()
 
     try:
