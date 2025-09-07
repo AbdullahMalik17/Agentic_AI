@@ -54,8 +54,25 @@ async def main(message: cl.Message):
     """
     Handles incoming user messages and runs the agentic workflow.
     """
+        # Retrieve the session for the current user chat
+    session = cl.user_session.get("session")
+
+    delete_commands = [
+        "remove session",
+        "delete session",
+        "remove session history",
+        "delete session history",
+    ]
+    if message.content.lower().strip() in delete_commands:
+        """It removes the session history for the current chat when the User asks."""
+        if session:
+            await session.clear_session()
+            print(f"Session History Removed for session_id: {session.session_id}")
+        await cl.Message(content="Your session history has been cleared.").send()
+        return
+
+    
     triage_agent = cl.user_session.get("triage_agent")
-    history = cl.user_session.get("history")
     msg = cl.Message(content="Thinking ...")
     await msg.send() 
     try:

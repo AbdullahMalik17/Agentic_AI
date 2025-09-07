@@ -21,6 +21,9 @@ from system_prompt import (
     mobile_developer_prompt,
     agentic_ai_developer_prompt,
     panacloud_prompt,
+    devops_prompt,
+    data_science_prompt,
+    block_chain_prompt
 )
 
 from dataclasses import dataclass
@@ -138,7 +141,7 @@ mobile_developer = Agent(
 
 devops_agent = Agent(
     name="DevOps_Expert",
-    instructions="You are a helpful assistant focused on DevOps. Provide clear, concise information about DevOps concepts, tools (like Docker, Kubernetes, CI/CD), and best practices. Generate code examples when necessary.\n\nBefore responding, always use the `search_user_memory` tool to check for relevant context from past conversations. After responding, use the `save_user_memory` tool to save key details that could be useful for future interactions.",
+    instructions=devops_prompt,
     model=common_model,
     tools=[web_search,save_user_memory,search_user_memory],
     model_settings=common_model_settings,
@@ -170,12 +173,28 @@ agentic_ai_developer = Agent(
     tools=[devops_tool, openai_tool, web_search,save_user_memory,search_user_memory],
     model_settings=common_model_settings,
 )
+data_science_agent : Agent = Agent(
+    name="Data Science Agent",
+    instructions=data_science_prompt,
+    model= common_model,
+    tools=[web_search,save_user_memory,search_user_memory],
+    model_settings=common_model_settings,
+    handoff_description="Expert in Data Science"
+)
+blockchain_agent:Agent=Agent(
+    name="BlockChain and Web3 Agent",
+    instructions=block_chain_prompt,
+    model = common_model,
+    handoff_description="Expert in BLockChain and Web3",
+    tools = [web_search,save_user_memory,search_user_memory],
+    model_settings=common_model_settings, 
+) 
 # Triage Agent: The entry point for all user queries
 triage_agent = Agent(
     name="Bushra Code Assistant",
     instructions=panacloud_prompt,
     model=common_model,
-    handoffs=[web_developer, mobile_developer, agentic_ai_developer],
+    handoffs=[web_developer, mobile_developer, agentic_ai_developer,data_science_agent,blockchain_agent],
     tools=[web_search, get_info,save_user_memory,search_user_memory],
     # 'required' forces the model to choose a handoff, which is good for a triage agent.
     model_settings=ModelSettings(temperature=TEMPERATURE, tool_choice="auto"),
