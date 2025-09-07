@@ -103,7 +103,7 @@ async def handle_message():
     """Handle the chat start event."""
     # Create a new session for each chat, identified by the user's session ID.
     # This ensures that conversation history is isolated between chats.
-    session = SQLiteSession("abdullah","Database.bd")
+    session = SQLiteSession("abdullah1","Database.bd")
     cl.user_session.set("session", session)
 
     # Send a welcome message when the chat starts

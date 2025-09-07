@@ -2,6 +2,7 @@ from agents import Agent , AsyncOpenAI, OpenAIChatCompletionsModel, function_too
 from agents.tool_context import ToolContext 
 import os 
 from dotenv import load_dotenv, find_dotenv
+from openai.types import Reasoning
 from tools import Info , get_info ,save_user_memory , search_user_memory
 from web_search import web_search 
 
@@ -87,6 +88,7 @@ citation_agent : Agent = Agent(
     instructions=citation_instructions,
     model=model,
     tools=[web_search],
+    handoff_description="Checking for best Citation"
     )
  
 reflect_agent: Agent = Agent(
@@ -94,18 +96,20 @@ reflect_agent: Agent = Agent(
     instructions = "You are the Reflect Agent. Your task is to reflect on the information provided by the Lead Agent and ensure it is comprehensive and accurate.",
     model = model,
     tools = [web_search],  # Using get_info tool for citation and validation
+    handoff_description="Reflect Agent that Reflects the data"
 ) 
 # To create a robust handoff chain and avoid NameErrors, we define the agents
 # in reverse order of their execution.
 lead_agent: Agent = Agent(
     name="Lead Agent",
     instructions=dynamic_instructions,
-    tools=[web_search, get_info,save_user_memory,search_user_memory],  # Added get_info tool to the final agent
-    model=model,
+    tools=[web_search, get_info,save_user_memory,search_user_memory,citation_agent.as_tool(tool_name="citation_tool",tool_description="It Checks the Citation for final response"),reflect_agent.as_tool(name="reflect_data_tool",tool_description="It reflects the final response of the Agent.")],  # Added get_info tool to the final agent
+    model=OpenAIChatCompletionsModel(openai_client=provider,model="gemini-2.5-pro"),
     handoff_description="",
     model_settings=ModelSettings(
         temperature=1.9,  #  higher for creative synthesis
         tool_choice="auto",
+        reasoning=Reasoning(generate_summary="detailed",summary="detailed")
     )
 )
 planning_agent: Agent = Agent(

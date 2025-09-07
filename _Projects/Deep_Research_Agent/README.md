@@ -1,6 +1,6 @@
 # Deep Research Agent 🔍
 
-This project implements a sophisticated, AI-powered multi-agent system designed to perform deep research on any given topic. The agent leverages a team of specialized AI agents to gather requirements, plan a research strategy, and retrieve real-time information from the web.
+This project implements a sophisticated, AI-powered multi-agent system designed to perform deep research on any given topic. The agent leverages a team of specialized AI agents to gather requirements, plan a research strategy, retrieve real-time information from the web and reasoning that increases the brain storming of Agent .
 
 ![Picture of workflow of Deep Research Agent](Workflow_of_Agent.png)
 
@@ -13,6 +13,7 @@ This project implements a sophisticated, AI-powered multi-agent system designed 
 - **Advanced Web Search:** Integrates with the Tavily API for accurate, up-to-date information retrieval.
 - **Interactive Chat Interface:** A user-friendly interface built with Chainlit for a seamless conversational experience.
 - **Real-time Streaming:** Streams responses and thought processes of the agents in real-time.
+- **Session and Agentic Memory** It gives the Session as well as Agentic Memory that increase the consistency and performance of the chatbot.
 - **Asynchronous Architecture:** Built with `asyncio` for efficient, non-blocking I/O operations, especially for web requests.
 
 ## 🛠️ How It Works
@@ -23,7 +24,9 @@ The system operates as a pipeline of agents. When a user provides a research que
 
 A core component of this system is the `web_search` tool, which provides real-time access to web information.
 
-- **Technology:** It uses the `Tavily` Python client to perform efficient and comprehensive web searches.
+- **Technology:** Here are the technologies used in the Deep Research Chatbot as follows :
+1. It uses the `Tavily` Python client to perform efficient and comprehensive web searches.
+2. It use the `Mem0` for Agentic Memory . It stores the important data about user .
 - **Functionality:** The `web_search` function is an asynchronous tool that takes a search query string.
 - **Output:** It fetches search results from the Tavily API, formats them into a clean, readable Markdown format, including the title, a snippet of the content, and a direct link to the source URL. This ensures all information is verifiable.
 
@@ -118,7 +121,7 @@ You can interact with the agent through the Chainlit interface with queries like
 
 ### How it works
 - Tools are defined with `@function_tool`.
-- The agent registers: `tools=[web_search, get_info]`.
+- The agent registers: `tools=[web_search, get_info, save_user_memory,search_user_memory]`.
 - Local context is passed as a dataclass instance: `Runner.run_streamed(..., context=Info(...))`.
 - Inside tools, access context via `Wrapper.context` (type-safe with `RunContextWrapper[Info]`).
 - Responses are streamed using `Runner.run_streamed(...).stream_events()`.
