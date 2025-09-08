@@ -41,6 +41,7 @@ if not tavily_api_key:
 openai_api_key = os.getenv("OPENAI_API_KEY")
 if not openai_api_key:
     raise ValueError("OPENAI_API_KEY is not set in the environment variables.")
+
 mem0_api_key = os.getenv("MEM0_API_KEY","")
 if not mem0_api_key:
     raise ValueError("The Mem0 API key is not set in the env file.")
@@ -48,19 +49,18 @@ if not mem0_api_key:
 # Note: "gemini-2.5-flash" seems like a custom or placeholder name.
 # Ensure it matches the actual model available at your endpoint.
 # Common models are "gemini-1.5-flash", "gemini-1.5-pro", etc.
-MODEL_NAME = "gemini-2.5-flash" 
-TEMPERATURE = 1.8
+MODEL_NAME = "gemini-2.5-pro" 
+TEMPERATURE = 1.7
 
 # Configure the client to use the Gemini API via an OpenAI-compatible endpoint
 external_client = AsyncOpenAI(
     api_key=gemini_api_key,
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
 )
-common_model_settings = ModelSettings(temperature=TEMPERATURE, tool_choice="auto")
+common_model_settings = ModelSettings(temperature=TEMPERATURE,reasoning=Reasoning(generate_summary="detailed",summary="detailed"),tool_choice="auto")
 common_model = OpenAIChatCompletionsModel(
     openai_client=external_client, model=MODEL_NAME
 )
-
 # Initialize Tavily client for web search
 tavily_client = AsyncTavilyClient(api_key=tavily_api_key)
 # --- Tool Definitions ---
