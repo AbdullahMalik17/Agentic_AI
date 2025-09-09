@@ -103,7 +103,7 @@ reflect_agent: Agent = Agent(
 lead_agent: Agent = Agent(
     name="Lead Agent",
     instructions=dynamic_instructions,
-    tools=[web_search, get_info,save_user_memory,search_user_memory,citation_agent.as_tool(tool_name="citation_tool",tool_description="It Checks the Citation for final response"),reflect_agent.as_tool(name="reflect_data_tool",tool_description="It reflects the final response of the Agent.")],  # Added get_info tool to the final agent
+    tools=[web_search, get_info,save_user_memory,search_user_memory,citation_agent.as_tool(tool_name="citation_tool",tool_description="It Checks the Citation for final response"),reflect_agent.as_tool(tool_name="reflect_data_tool",tool_description="It reflects the final response of the Agent.")],  # Added get_info tool to the final agent
     model=OpenAIChatCompletionsModel(openai_client=provider,model="gemini-2.5-pro"),
     handoff_description="",
     model_settings=ModelSettings(
