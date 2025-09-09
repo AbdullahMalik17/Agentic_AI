@@ -3,10 +3,10 @@ import chainlit as cl
 from chainlit import on_message, on_chat_start
 from agent_definations import triage_agent , Info 
 
-from agents import Agent,Runner , MaxTurnsExceeded , RunConfig , SQLiteSession , RunHooks , RunContextWrapper 
+from agents import Agent,Runner , MaxTurnsExceeded , RunConfig , SQLiteSession , RunHooks , RunContextWrapper,InputGuardrailTripwireTriggered
 
 # Session for memory Management .
-session = SQLiteSession("Conservation","Code_Assistant.db")
+session = SQLiteSession("Umer","Code_Assistant.db")
 class RunHookCycle(RunHooks):
     def __init__(self):
         self.active_agents = []
@@ -106,9 +106,10 @@ async def main(message: cl.Message):
 
         # Finalize the streamed message and persist history
         await msg.update()
-
+    except InputGuardrailTripwireTriggered as e:
+        await cl.Message(content=f"Your input is invalid . I am here to help you in programming and coding .").send()   
+        print("Error1",e) 
     except Exception as e:
-        error_message = f"An error occurred: {str(e)}"
-        print(e)
-        await cl.Message(content=error_message).send()
-        print(error_message)
+        await cl.Message(content=f"An error occur {e}").send()
+        print("Error2",e)
+        

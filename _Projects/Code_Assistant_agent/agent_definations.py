@@ -25,7 +25,7 @@ from system_prompt import (
     data_science_prompt,
     block_chain_prompt
 )
-
+from quardrials import related_message
 from dataclasses import dataclass
 # --- Load Environment Variables ---
 _:bool = load_dotenv(find_dotenv())
@@ -85,7 +85,7 @@ async def web_search(query: str) -> str:
         return "\n".join(formatted_results)
     except Exception as e:
         return f"An error occurred during web search: {e}"
-
+  
 @dataclass
 class Info:
     name : str
@@ -95,7 +95,6 @@ class Info:
 def get_info(Wrapper:RunContextWrapper[Info])->str:
     """The name and description of user from the context."""
     return f"The name of user is {Wrapper.context.name} and the description is {Wrapper.context.description}."
-
 
 mem0_api_key =os.getenv("MEM0_API_KEY")
 mem_client = MemoryClient(api_key=mem0_api_key)
@@ -128,6 +127,7 @@ web_developer = Agent(
     handoff_description="An expert in web development technologies like React,Next.js, Node.js, and Python.",
     tools=[web_search,save_user_memory,search_user_memory],
     model_settings=common_model_settings,
+    input_guardrails=[related_message]
 )
 
 mobile_developer = Agent(
@@ -137,6 +137,7 @@ mobile_developer = Agent(
     handoff_description="An expert in mobile app development for iOS and Android.",
     tools=[web_search,save_user_memory,search_user_memory],
     model_settings=common_model_settings,
+    input_guardrails=[related_message]
 )
 
 devops_agent = Agent(
@@ -172,6 +173,7 @@ agentic_ai_developer = Agent(
     handoff_description="An expert in building Agentic AI systems and using advanced AI frameworks(openai sdk , Langchain/LanGraph , CrewAI).",
     tools=[devops_tool, openai_tool, web_search,save_user_memory,search_user_memory],
     model_settings=common_model_settings,
+    input_guardrails=[related_message]    
 )
 data_science_agent : Agent = Agent(
     name="Data Science Agent",
@@ -179,7 +181,8 @@ data_science_agent : Agent = Agent(
     model= common_model,
     tools=[web_search,save_user_memory,search_user_memory],
     model_settings=common_model_settings,
-    handoff_description="Expert in Data Science"
+    handoff_description="Expert in Data Science",
+    input_guardrails=[related_message]    
 )
 blockchain_agent:Agent=Agent(
     name="BlockChain and Web3 Agent",
@@ -188,6 +191,7 @@ blockchain_agent:Agent=Agent(
     handoff_description="Expert in BLockChain and Web3",
     tools = [web_search,save_user_memory,search_user_memory],
     model_settings=common_model_settings, 
+    input_guardrails=[related_message]    
 ) 
 # Triage Agent: The entry point for all user queries
 triage_agent = Agent(
@@ -198,4 +202,5 @@ triage_agent = Agent(
     tools=[web_search, get_info,save_user_memory,search_user_memory],
     # 'required' forces the model to choose a handoff, which is good for a triage agent.
     model_settings=ModelSettings(temperature=TEMPERATURE, tool_choice="auto"),
+    input_guardrails=[related_message]
 )
