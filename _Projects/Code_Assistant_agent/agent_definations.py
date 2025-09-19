@@ -57,7 +57,7 @@ external_client = AsyncOpenAI(
     api_key=gemini_api_key,
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
 )
-common_model_settings = ModelSettings(temperature=TEMPERATURE,reasoning=Reasoning(generate_summary="detailed",summary="detailed"),tool_choice="auto")
+common_model_settings = ModelSettings(temperature=TEMPERATURE,reasoning=Reasoning(generate_summary="concise",summary="concise"),tool_choice="auto")
 common_model = OpenAIChatCompletionsModel(
     openai_client=external_client, model=MODEL_NAME
 )

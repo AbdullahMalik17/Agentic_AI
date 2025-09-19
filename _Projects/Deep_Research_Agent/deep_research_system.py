@@ -135,7 +135,7 @@ async def main(message: cl.Message):
 
     try:
         # give the data of the user to the agent
-        user_Info1 = Info(name="abdullah", interests=["AI", "Web development", "Agentic AI"])
+        user_Info1 = Info(name="nafay", interests=["AI", "Web development", "Agentic AI"])
 
         result = Runner.run_sync(
             starting_agent=agent,
