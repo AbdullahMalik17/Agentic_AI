@@ -1,2 +1,4 @@
 Agentic AI in Pakistan_ Implications for Universities and Software Houses.pdf
 .venv
+.env
+*.env
