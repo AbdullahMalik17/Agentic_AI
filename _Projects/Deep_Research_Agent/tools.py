@@ -5,7 +5,7 @@ from mem0 import MemoryClient
 from agents.tool_context import ToolContext
 mem0_api_key =os.getenv("MEM0_API_KEY")
 mem_client = MemoryClient(api_key=mem0_api_key)
-
+import chainlit as cl 
 
 @dataclass
 class Info:
@@ -13,6 +13,7 @@ class Info:
     interests: [str]
     
 @function_tool
+# @cl.step(type="GET Info Tool")
 def get_info():
     info = Info("Abdullah",["Web","Agentic AI"]) 
     return info   

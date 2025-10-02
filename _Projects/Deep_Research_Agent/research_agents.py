@@ -19,7 +19,9 @@ if not openai_api_key:
 # Step 1: Create a provider 
 provider = AsyncOpenAI(
     api_key=gemini_api_key,
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+    max_retries=3,
+    timeout=30.0
 )
 # Step 2: Create a model
 model = OpenAIChatCompletionsModel(

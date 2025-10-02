@@ -29,10 +29,34 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 if not openai_api_key:
     raise ValueError("OpenAI API key is not set. Please ensure OPENAI_API_KEY is defined in your .env file.")
 
+# Add rate limiting class
+class RateLimiter:
+    def __init__(self, max_requests=1, time_window=60):
+        self.max_requests = max_requests
+        self.time_window = time_window
+        self.requests = []
+    
+    async def wait_if_needed(self):
+        now = time.time()
+        self.requests = [req_time for req_time in self.requests if now - req_time < self.time_window]
+        
+        if len(self.requests) >= self.max_requests:
+            sleep_time = self.time_window - (now - self.requests[0]) + 1
+            print(f"⏳ Rate limit reached. Waiting {sleep_time:.1f} seconds...")
+            await asyncio.sleep(sleep_time)
+            self.requests = []
+        
+        self.requests.append(now)
+
+# Global rate limiter
+rate_limiter = RateLimiter(max_requests=1, time_window=60)
+
 # Step 1: Create a provider 
 provider = AsyncOpenAI(
     api_key=gemini_api_key,
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+    timeout=30.0,
+    max_retries=3
 )
 
 # Step 2: Create a model

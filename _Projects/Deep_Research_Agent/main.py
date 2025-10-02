@@ -50,6 +50,7 @@ class Info:
     sister_name : str
     
 @function_tool 
+@cl.step(type="Web Search Tool")
 async def web_search(query: str):
     """Search the web using Tavily."""
     response = await tavily_client.search(query)
@@ -70,6 +71,7 @@ async def web_search(query: str):
     return all_results
 
 @function_tool
+@cl.step(type="Get Info Tool")
 async def get_info(Wrapper: RunContextWrapper[Info]) -> str:
     """Return the user's profile information from the run context."""
     return (

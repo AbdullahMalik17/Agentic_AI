@@ -1,4 +1,5 @@
 import os 
+import chainlit as cl
 from dotenv import load_dotenv, find_dotenv
 from tavily import AsyncTavilyClient
 load_dotenv(find_dotenv())
@@ -11,6 +12,7 @@ if not tavily_api_key:
 tavily_client = AsyncTavilyClient(api_key=tavily_api_key)
 # --- Tool Definitions ---    
 @function_tool 
+@cl.step(type="Web Search Tool")
 async def web_search(query: str):
     """Search the web using Tavily."""
     response = await tavily_client.search(query)
