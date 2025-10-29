@@ -1,9 +1,26 @@
+import os
 # This file is part of the Coder AI Assistant project.
 import chainlit as cl
 from chainlit import on_message, on_chat_start
 from agent_definations import triage_agent , Info 
+from openinference.instrumentation.openai_agents import OpenAIAgentsInstrumentor
+from langfuse import get_client
+ 
+OpenAIAgentsInstrumentor().instrument()
+from agents import Agent,Runner , MaxTurnsExceeded , RunConfig , SQLiteSession , RunHooks , RunContextWrapper,InputGuardrailTripwireTriggered 
 
-from agents import Agent,Runner , MaxTurnsExceeded , RunConfig , SQLiteSession , RunHooks , RunContextWrapper,InputGuardrailTripwireTriggered
+
+# langfuse_public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
+# langfuse_secret_key = os.getenv("LANGFUSE_SECRET_KEY")
+# langfuse_host = os.getenv("LANGFUSE_HOST")
+# langfuse = get_client()
+ 
+# # Verify connection
+# if langfuse.auth_check():
+#     print("Langfuse client is authenticated and ready!")
+# else:
+#     print("Authentication failed. Please check your credentials and host.")
+
 
 # Session for memory Management .
 session = SQLiteSession("abdullah123","Code_Assistant.db")

@@ -1,8 +1,10 @@
 import os
 from dotenv import load_dotenv, find_dotenv
-import time
-from datetime import datetime
+from openinference.instrumentation.openai_agents import OpenAIAgentsInstrumentor
+from langfuse import get_client 
+OpenAIAgentsInstrumentor().instrument()
 from mem0 import MemoryClient
+
 
 from agents import (
     Agent,
@@ -45,11 +47,25 @@ if not openai_api_key:
 mem0_api_key = os.getenv("MEM0_API_KEY","")
 if not mem0_api_key:
     raise ValueError("The Mem0 API key is not set in the env file.")
+
+ # Langfuse credentials
+langfuse_public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
+langfuse_secret_key = os.getenv("LANGFUSE_SECRET_KEY")
+langfuse_host = os.getenv("LANGFUSE_HOST")
+
+
+langfuse = get_client()
+ 
+# Verify connection
+if langfuse.auth_check():
+    print("Langfuse client is authenticated and ready!2")
+else:
+    print("Authentication failed. Please check your credentials and host.5")
 # --- Model and Client Configuration ---
 # Note: "gemini-2.5-flash" seems like a custom or placeholder name.
 # Ensure it matches the actual model available at your endpoint.
 # Common models are "gemini-1.5-flash", "gemini-1.5-pro", etc.
-MODEL_NAME = "gemini-2.5-pro" 
+MODEL_NAME = "gemini-2.5-flash" 
 TEMPERATURE = 1.7
 
 # Configure the client to use the Gemini API via an OpenAI-compatible endpoint

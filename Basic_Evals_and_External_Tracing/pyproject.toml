@@ -1,16 +1,11 @@
 [project]
-name = "code-assistant-agent"
+name = "basic-evals-and-external-tracing"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "chainlit>=2.6.3",
-    "dotenv>=0.9.9",
     "langfuse>=3.8.1",
-    "mem0ai>=0.1.117",
-    "openai==1.98.0",
-    "openai-agents>=0.2.5",
+    "openai-agents>=0.4.2",
     "openinference-instrumentation-openai-agents>=1.3.0",
-    "tavily-python>=0.7.10",
 ]
